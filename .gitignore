@@ -1,0 +1,22 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.next/
+dist/
+build/
+*.log
+.DS_Store
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+.playwright-cli/
+.claude/
+HANDOFF.md
+CODE_GUIDE.md
+TwinMind - Live Suggestions Assignment April 2026.docx
+Video links.docx
+~$*.docx
+twinmind-session-*.json
+scripts/audit_competitors.py
