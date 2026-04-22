@@ -1,28 +1,9 @@
 import { useSession, useSettings } from "@/lib/store";
-import type { MeetingType, Suggestion, SuggestionBatch, TranscriptChunk } from "@/lib/types";
+import { hasEnoughTranscriptForSuggestions } from "@/lib/suggestReadiness";
+import { buildTranscriptContext } from "@/lib/transcriptContext";
+import type { MeetingType, Suggestion, SuggestionBatch } from "@/lib/types";
 
 const MAX_PREVIOUS_ITEMS = 15;
-
-function buildLabeledTranscript(
-  chunks: TranscriptChunk[],
-  maxChars: number,
-): string {
-  const parts: string[] = [];
-  let used = 0;
-  for (let i = chunks.length - 1; i >= 0; i--) {
-    const c = chunks[i];
-    const label =
-      c.speaker === "user" ? "[YOU]" : c.speaker === "other" ? "[OTHER]" : "[?]";
-    const piece = `${label} ${c.text}`;
-    if (used + piece.length > maxChars) {
-      parts.unshift(piece.slice(-Math.max(0, maxChars - used)));
-      break;
-    }
-    parts.unshift(piece);
-    used += piece.length + 1;
-  }
-  return parts.join("\n");
-}
 
 interface SuggestResponse {
   suggestions: Suggestion[];
@@ -31,17 +12,21 @@ interface SuggestResponse {
   meetingTypeRationale?: string;
 }
 
-export async function fetchSuggestions(): Promise<SuggestionBatch> {
+export async function fetchSuggestions(): Promise<SuggestionBatch | null> {
   const { settings } = useSettings.getState();
   if (!settings.apiKey) {
     throw new Error("API key not set");
   }
 
   const session = useSession.getState();
-  const transcript = buildLabeledTranscript(
+  const transcript = buildTranscriptContext(
     session.transcript,
     settings.suggestContextChars,
   );
+
+  if (!hasEnoughTranscriptForSuggestions(transcript)) {
+    return null;
+  }
 
   const previousSuggestions = session.batches
     .slice(0, 3)
@@ -66,6 +51,10 @@ export async function fetchSuggestions(): Promise<SuggestionBatch> {
       userRole: settings.userRole,
     }),
   });
+
+  if (res.status === 422) {
+    return null;
+  }
 
   if (!res.ok) {
     const body = await res.text();

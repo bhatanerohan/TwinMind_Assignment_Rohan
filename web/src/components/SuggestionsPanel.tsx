@@ -41,6 +41,7 @@ export default function SuggestionsPanel() {
     setError(null);
     try {
       const batch = await fetchSuggestions();
+      if (!batch) return;
       addBatch(batch);
       setSecondsLeft(Math.round(refreshIntervalMs / 1000));
     } catch (err) {

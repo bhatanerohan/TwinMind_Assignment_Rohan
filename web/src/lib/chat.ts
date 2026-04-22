@@ -1,8 +1,8 @@
 import {
-  mostRecentTranscriptText,
   useSession,
   useSettings,
 } from "@/lib/store";
+import { buildTranscriptContext } from "@/lib/transcriptContext";
 import type { Suggestion } from "@/lib/types";
 
 export async function* streamChatReply(
@@ -18,7 +18,7 @@ export async function* streamChatReply(
   const contextChars = fromSuggestion
     ? settings.detailContextChars
     : settings.chatContextChars;
-  const transcript = mostRecentTranscriptText(session.transcript, contextChars);
+  const transcript = buildTranscriptContext(session.transcript, contextChars);
   const systemPrompt = fromSuggestion
     ? settings.detailPrompt
     : settings.chatPrompt;

@@ -98,7 +98,7 @@ export async function POST(request: Request) {
         messages,
         stream: true,
         reasoning_effort: "low",
-        max_tokens: isDetailExpand ? 400 : 2000,
+        max_tokens: isDetailExpand ? 200 : 2000,
       });
 
       if (upstream.ok) {

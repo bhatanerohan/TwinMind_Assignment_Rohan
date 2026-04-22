@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { useSession, useSettings } from "@/lib/store";
 import { startRecording } from "@/lib/recorder";
 import { uploadChunk } from "@/lib/transcribe";
-import { classifyTurn } from "@/lib/classifyTurn";
 import PanelHeader from "@/components/PanelHeader";
 
 function formatClock(ts: number): string {
@@ -20,13 +19,9 @@ export default function TranscriptPanel() {
   const isRecording = useSession((s) => s.isRecording);
   const setRecording = useSession((s) => s.setRecording);
   const addTranscriptChunk = useSession((s) => s.addTranscriptChunk);
-
-  const updateTranscriptChunkSpeaker = useSession((s) => s.updateTranscriptChunkSpeaker);
-
   const settings = useSettings((s) => s.settings);
   const hasApiKey = settings.apiKey.trim().length > 0;
   const chunkIntervalMs = settings.chunkIntervalMs;
-  const userRole = settings.userRole;
 
   const [error, setError] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
@@ -61,12 +56,7 @@ export default function TranscriptPanel() {
           try {
             const chunk = await uploadChunk(blob, startedAt);
             if (chunk.text.length === 0) return;
-            addTranscriptChunk({ ...chunk, speaker: "unknown" });
-            if (userRole !== "unknown") {
-              void classifyTurn(chunk.id, chunk.text).then((res) => {
-                if (res) updateTranscriptChunkSpeaker(chunk.id, res.speaker, res.confidence);
-              });
-            }
+            addTranscriptChunk(chunk);
           } catch (err) {
             console.error("uploadChunk failed", err);
             setError("Failed to transcribe chunk.");

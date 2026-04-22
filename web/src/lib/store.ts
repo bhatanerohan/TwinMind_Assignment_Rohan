@@ -124,17 +124,18 @@ export const useSettings = create<SettingsState>()(
     {
       name: "twinmind-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 4,
+      version: 7,
       migrate: (persisted: unknown, version: number) => {
         const p = (persisted ?? {}) as { settings?: Partial<Settings> };
-        const oldApiKey = p.settings?.apiKey ?? "";
-        const oldRole = p.settings?.userRole ?? "unknown";
-        if (version < 4) {
+        const oldSettings = p.settings ?? {};
+        if (version < 7) {
           return {
             settings: {
               ...DEFAULT_SETTINGS,
-              apiKey: oldApiKey,
-              userRole: oldRole,
+              ...oldSettings,
+              suggestPrompt: DEFAULT_SETTINGS.suggestPrompt,
+              detailPrompt: DEFAULT_SETTINGS.detailPrompt,
+              chatPrompt: DEFAULT_SETTINGS.chatPrompt,
             },
           } as SettingsState;
         }
@@ -143,21 +144,6 @@ export const useSettings = create<SettingsState>()(
     },
   ),
 );
-
-export function mostRecentTranscriptText(chunks: TranscriptChunk[], maxChars: number): string {
-  let chars = 0;
-  const picked: string[] = [];
-  for (let i = chunks.length - 1; i >= 0; i--) {
-    const t = chunks[i].text;
-    if (chars + t.length > maxChars) {
-      picked.unshift(t.slice(-Math.max(0, maxChars - chars)));
-      break;
-    }
-    picked.unshift(t);
-    chars += t.length;
-  }
-  return picked.join("\n");
-}
 
 export function suggestionById(batches: SuggestionBatch[], id: string): Suggestion | undefined {
   for (const b of batches) {

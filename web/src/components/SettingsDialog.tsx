@@ -192,7 +192,7 @@ export default function SettingsDialog({
             <option value="observer">Observer (listening to others' conversation)</option>
           </select>
           <p className="mt-1.5 text-xs text-slate-500">
-            When set, each transcript chunk is classified as YOU or OTHER, and suggestions are framed from your perspective. Adds one small Groq call per chunk.
+            Used as a high-level framing hint only. Transcript chunks are no longer auto-labeled as YOU or OTHER because live chunks can mix speakers.
           </p>
         </section>
 

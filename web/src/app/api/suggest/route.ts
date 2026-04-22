@@ -1,4 +1,6 @@
 import { groqChat, readApiKeyFromRequest, type GroqChatMessage } from "@/lib/groq";
+import { hasFactualClaim } from "@/lib/factCheck";
+import { hasEnoughTranscriptForSuggestions } from "@/lib/suggestReadiness";
 import type { MeetingType, Suggestion, SuggestionKind, UserRole } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -54,8 +56,8 @@ Given a transcript (may be a partial conversation), return STRICT JSON:
 
 Types:
 • sales — someone is selling to or evaluating a vendor; pricing, deals, demos, objections
-• interview — job interview, either direction; skills, experience, culture-fit questions
-• technical — engineering/design discussion; architecture, implementation, debugging
+• interview — job interview, either direction. Includes system-design and technical-screen interviews where one party asks the other to design, solve, or explain something with EVALUATIVE FRAMING ("take me through…", "walk me through…", "design X", "how would you approach…"). If there is any evaluator-candidate dynamic, prefer "interview" over "technical" even if the content is engineering-heavy.
+• technical — collaborative engineering/design discussion between peers; architecture, implementation, debugging. No evaluator-candidate dynamic — both parties are solving together.
 • pitch — founder/creator pitching an idea or product to an audience or investor
 • support — customer support, troubleshooting a user's problem
 • planning — internal planning, standup, roadmap, project coordination
@@ -162,6 +164,12 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as SuggestRequestBody;
   const { transcript, systemPrompt, previousSuggestions, model } = body;
+  if (!hasEnoughTranscriptForSuggestions(transcript ?? "")) {
+    return Response.json(
+      { error: "Not enough transcript yet for anchored suggestions" },
+      { status: 422 },
+    );
+  }
   const incomingMeetingType: MeetingType = isValidMeetingType(body.meetingType)
     ? body.meetingType
     : "unknown";
@@ -178,10 +186,7 @@ export async function POST(request: Request) {
   const effectiveMeetingType: MeetingType =
     classification?.meetingType ?? incomingMeetingType;
 
-  const transcriptBlock =
-    transcript && transcript.trim().length > 0
-      ? transcript
-      : "(empty — conversation just starting)";
+  const transcriptBlock = transcript;
 
   const previousBlock =
     previousSuggestions && previousSuggestions.length > 0
@@ -199,10 +204,15 @@ export async function POST(request: Request) {
           ? "USER_ROLE: guest — the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask."
           : "USER_ROLE: observer — the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
 
+  const factCheckHint = hasFactualClaim(transcript ?? "", previousSuggestions ?? [])
+    ? `FACTUAL_CLAIMS_DETECTED: yes. A "fact-check" card is MANDATORY — one of your 3 suggestions MUST have kind="fact-check" and quote the specific claim from the transcript.\n\n`
+    : "";
+
   const userContent =
     `MEETING_TYPE: ${effectiveMeetingType}\n` +
     `${roleHint}\n\n` +
-    `RECENT_TRANSCRIPT (turns prefixed with [YOU] / [OTHER] / [?] based on classifier):\n${transcriptBlock}\n\n` +
+    `${factCheckHint}` +
+    `TRANSCRIPT_CONTEXT (dense recent transcript plus sparse older excerpts; speaker labels may be omitted):\n${transcriptBlock}\n\n` +
     `PREVIOUSLY_SHOWN_SUGGESTIONS (do not repeat or near-repeat these):\n${previousBlock}\n\n` +
     `Return exactly 3 suggestions as strict JSON matching the schema.`;
 
