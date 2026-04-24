@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Header from "@/components/Header";
 import TranscriptPanel from "@/components/TranscriptPanel";
 import SuggestionsPanel from "@/components/SuggestionsPanel";
@@ -8,20 +8,28 @@ import ChatPanel from "@/components/ChatPanel";
 import SettingsDialog from "@/components/SettingsDialog";
 import { useSettings } from "@/lib/store";
 
+const subscribeMounted = () => () => {};
+
+function useMounted(): boolean {
+  return useSyncExternalStore(
+    subscribeMounted,
+    () => true,
+    () => false,
+  );
+}
+
 export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useMounted();
   const apiKey = useSettings((s) => s.settings.apiKey);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     if (!mounted) return;
-    if (apiKey.trim().length === 0) {
+    if (apiKey.trim().length > 0) return;
+    const id = window.setTimeout(() => {
       setSettingsOpen(true);
-    }
+    }, 0);
+    return () => window.clearTimeout(id);
   }, [apiKey, mounted]);
 
   if (!mounted) {
