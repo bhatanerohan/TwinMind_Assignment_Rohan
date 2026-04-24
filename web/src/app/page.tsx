@@ -6,7 +6,6 @@ import TranscriptPanel from "@/components/TranscriptPanel";
 import SuggestionsPanel from "@/components/SuggestionsPanel";
 import ChatPanel from "@/components/ChatPanel";
 import SettingsDialog from "@/components/SettingsDialog";
-import { useSettings } from "@/lib/store";
 
 const subscribeMounted = () => () => {};
 
@@ -21,16 +20,14 @@ function useMounted(): boolean {
 export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const mounted = useMounted();
-  const apiKey = useSettings((s) => s.settings.apiKey);
 
   useEffect(() => {
     if (!mounted) return;
-    if (apiKey.trim().length > 0) return;
     const id = window.setTimeout(() => {
       setSettingsOpen(true);
     }, 0);
     return () => window.clearTimeout(id);
-  }, [apiKey, mounted]);
+  }, [mounted]);
 
   if (!mounted) {
     return (
