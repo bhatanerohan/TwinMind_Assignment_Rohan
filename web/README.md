@@ -106,7 +106,6 @@ Trade-off: Groq free-tier TPM is the binding constraint. Larger windows = deeper
 ## Architecture
 
 ```
-scripts/              Python Phase-0 smoke-test tool (not part of deployed app)
 web/
   src/app/
     api/
@@ -151,9 +150,5 @@ Every Groq call goes through a server-side Next.js API route. The user's API key
 - Per-meeting-type specialized prompt variants (sales prompt ≠ interview prompt ≠ debugging-session prompt).
 - Streaming the suggestion JSON with a partial-JSON parser for faster first-card render.
 - Dev-mode A/B prompt harness — run two prompt versions on the same transcript side-by-side to diff the output qualitatively.
-
-## scripts/test_groq.py
-
-A Python-stdlib smoke-test for the Groq key — lists models, verifies chat + whisper endpoints, and offers an interactive record/chat loop (using `sounddevice` + `numpy` only when you use the record path). Used during Phase 0 to confirm the account's model access and rate-limit behavior before building the web app. Not part of the deployed product.
 
 See also the repo-root `CODE_GUIDE.md` for a file-by-file walkthrough of the source tree.

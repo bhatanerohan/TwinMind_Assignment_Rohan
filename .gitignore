@@ -19,6 +19,5 @@ TwinMind - Live Suggestions Assignment April 2026.docx
 Video links.docx
 ~$*.docx
 twinmind-session-*.json
-scripts/audit_competitors.py
 web/scripts/eval-reports/*.md
 !web/scripts/eval-reports/.gitkeep
