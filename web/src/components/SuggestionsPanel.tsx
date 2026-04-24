@@ -8,6 +8,7 @@ import SuggestionCard from "@/components/SuggestionCard";
 import PanelHeader from "@/components/PanelHeader";
 import { fetchSuggestions } from "@/lib/suggest";
 import { streamChatReply, formatChatError } from "@/lib/chat";
+import { appendBufferedStream } from "@/lib/streamBuffer";
 
 function formatClock(ts: number): string {
   return new Date(ts).toLocaleTimeString("en-US", {
@@ -20,6 +21,9 @@ function formatClock(ts: number): string {
 export default function SuggestionsPanel() {
   const batches = useSession((s) => s.batches);
   const isRecording = useSession((s) => s.isRecording);
+  const latestTranscriptId = useSession((s) =>
+    s.transcript.length > 0 ? s.transcript[s.transcript.length - 1].id : null,
+  );
   const addBatch = useSession((s) => s.addBatch);
   const addChatMessage = useSession((s) => s.addChatMessage);
   const updateChatMessage = useSession((s) => s.updateChatMessage);
@@ -32,6 +36,7 @@ export default function SuggestionsPanel() {
   const [error, setError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(() => Math.round(refreshIntervalMs / 1000));
   const loadingRef = useRef(false);
+  const firstBatchAttemptRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
     if (loadingRef.current) return;
@@ -62,6 +67,17 @@ export default function SuggestionsPanel() {
   }, [isRecording, hasApiKey, refreshIntervalMs, refresh]);
 
   useEffect(() => {
+    if (!latestTranscriptId) {
+      firstBatchAttemptRef.current = null;
+      return;
+    }
+    if (!isRecording || !hasApiKey || batches.length > 0) return;
+    if (firstBatchAttemptRef.current === latestTranscriptId) return;
+    firstBatchAttemptRef.current = latestTranscriptId;
+    void refresh();
+  }, [isRecording, hasApiKey, batches.length, latestTranscriptId, refresh]);
+
+  useEffect(() => {
     if (!isRecording || !hasApiKey) return;
     const id = setInterval(() => {
       setSecondsLeft((s) => (s <= 1 ? Math.round(refreshIntervalMs / 1000) : s - 1));
@@ -85,9 +101,9 @@ export default function SuggestionsPanel() {
       createdAt: Date.now(),
     });
     try {
-      for await (const token of streamChatReply("", suggestion)) {
-        updateChatMessage(assistantId, (prev) => prev + token);
-      }
+      await appendBufferedStream(streamChatReply("", suggestion), (chunk) =>
+        updateChatMessage(assistantId, (prev) => prev + chunk),
+      );
     } catch (err) {
       console.error("streamChatReply failed", err);
       const msg = formatChatError(err);

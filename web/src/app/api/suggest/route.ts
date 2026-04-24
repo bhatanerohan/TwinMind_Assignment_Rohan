@@ -74,6 +74,13 @@ function isValidMeetingType(value: unknown): value is MeetingType {
   return typeof value === "string" && VALID_MEETING_TYPES.has(value as MeetingType);
 }
 
+function stripActionPrefix(value: string): string {
+  const cleaned = value
+    .replace(/^(ask|say|verify|raise|clarify|bring up)\s*[:\-]\s*/i, "")
+    .trim();
+  return cleaned.length > 0 ? cleaned : value.trim();
+}
+
 interface ClassificationResult {
   meetingType: MeetingType;
   meetingTypeConfidence: number;
@@ -194,15 +201,14 @@ export async function POST(request: Request) {
       : "(none yet)";
 
   const userRole: UserRole = body.userRole ?? "unknown";
-
   const roleHint =
     userRole === "unknown"
-      ? "USER_ROLE: unknown — frame suggestions neutrally (avoid assuming whether the user is asking or answering)."
+      ? "USER_ROLE: unknown - frame suggestions neutrally; avoid assuming whether the user is asking or answering."
       : userRole === "host"
-        ? "USER_ROLE: host — the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the guest's answers."
+        ? "USER_ROLE: host - the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the other side's answers."
         : userRole === "guest"
-          ? "USER_ROLE: guest — the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask."
-          : "USER_ROLE: observer — the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
+          ? "USER_ROLE: guest - the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask."
+          : "USER_ROLE: observer - the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
 
   const factCheckHint = hasFactualClaim(transcript ?? "", previousSuggestions ?? [])
     ? `FACTUAL_CLAIMS_DETECTED: yes. A "fact-check" card is MANDATORY — one of your 3 suggestions MUST have kind="fact-check" and quote the specific claim from the transcript.\n\n`
@@ -302,8 +308,8 @@ export async function POST(request: Request) {
     suggestions.push({
       id: crypto.randomUUID(),
       kind: rec.kind,
-      title: rec.title,
-      preview: rec.preview,
+      title: stripActionPrefix(rec.title),
+      preview: stripActionPrefix(rec.preview),
     });
   }
 

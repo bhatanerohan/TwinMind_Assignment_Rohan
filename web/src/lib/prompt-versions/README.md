@@ -11,6 +11,10 @@ against 6 criteria (5 per-suggestion + 1 per-batch variety). Judge model:
 `openai/gpt-oss-120b` (same as target; accepts judge-is-generator bias risk
 for infrastructure simplicity).
 
+Note: eval fixtures were replaced with original project-specific scenarios after
+the v3 dense/sparse context run, so older rows are useful for direction but are
+not strict apples-to-apples baselines for future runs.
+
 | Version | Mode | Total / 18 | Specificity | Actionability | Preview | Timing | Meeting-type | Variety | Fact-check % | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | v1.0.0 | quick (4 batches) | 13.93 | 2.83 | 1.50 ⚠️ | 2.33 | 2.42 | 2.58 | 2.25 | 33.3% ✓ | 2026-04-20T01:08Z. Baseline. Fact-check rate is from server-side injection (not the prompt) — same on v2. |
@@ -25,7 +29,7 @@ for infrastructure simplicity).
 - Preview-value-standalone rule
 - Manual-audit issues (pre-eval): 0% fact-checks, ~25% premature, ~5 re-raises per session
 
-### v2.0.0 — stacked fixes (Prabhakar v2.5 borrows + HANDOFF §5 known-issues)
+### v2.0.0 — stacked fixes from manual audit + known issues
 Changes vs v1.0.0:
 1. **FOREGROUND RULE** (new routing rule 8): trigger quote MUST come from the last 2 chunks.
 2. **ALGORITHMIC VARIETY** (replaces soft "≥2 distinct kinds"): "at MOST 1 of your 3 kinds may appear in PREV_KINDS."
@@ -41,7 +45,7 @@ Paired code changes (not in the prompt file, but shipped together):
 
 ### v3.0.0 — action-first interview tuning
 Changes vs v2.0.0:
-1. **ACTION-FIRST PREVIEW SHAPES**: every kind now tells the user what to say or do next (`Ask:`, `Say:`, `Verify:`, `Raise:`, `Clarify:` / `Bring up:`).
+1. **ACTION-FIRST PREVIEW SHAPES**: every kind now tells the user what to say or do next.
 2. **INTERVIEW BIAS**: in interview mode, prefer question / answer / talking-point; low-value trivia fact-checks are explicitly called out as failures.
 3. **TOPIC ANTI-REPEAT**: repeated underlying topics are banned even when the kind changes.
 4. **MOVE THE INTERVIEW FORWARD**: at least one card per batch must advance the current decision branch in the next 30 seconds.
@@ -49,8 +53,23 @@ Changes vs v2.0.0:
 Paired code changes:
 - `factCheck.ts`: fact-check forcing now looks only at strong claims in the last 2 transcript lines and skips topics already covered by recent suggestions.
 - `transcriptContext.ts`: suggestions, detail, chat, and eval now use dense recent context plus sparse older excerpts instead of dropping all older transcript once the character limit is reached.
-- `TranscriptPanel.tsx`: per-chunk YOU/OTHER classification is no longer run automatically; `userRole` remains a high-level framing hint.
-- `store.ts`: persist v5 → v7 so existing users pick up v3/context-prompt updates automatically without losing non-prompt settings.
+- `TranscriptPanel.tsx` / settings: per-chunk YOU/OTHER classification is no longer required for suggestion quality; `userRole` remains as a high-level framing hint.
+- `DEFAULT_DETAIL_PROMPT`: external numbers, product policies, limits, and benchmarks must be framed as transcript-grounded assumptions or verification items, not invented facts.
+- `store.ts`: persist v5 -> v9 so existing users pick up v3/context/detail/chat-prompt updates without losing non-prompt settings.
+
+### v3.1.0 - foreground and safety tightening
+Changes vs v3.0.0:
+1. **STRICTER FOREGROUND**: earlier sampled context is memory only; card triggers must come from the final 1-2 RECENT_CONTEXT entries.
+2. **NO SIDE-QUESTIONS**: avoids adjacent best-practice topics that are not opened by the current foreground.
+3. **TALKING-POINT ACTIONABILITY**: talking points now require exact spoken wording.
+4. **NARROWER FACT-CHECK FORCING**: fact-check forcing requires a numeric/bounded claim plus a decision-relevant metric.
+5. **ORIGINAL EVAL FIXTURES**: eval scenarios were renamed/replaced with project-specific transcripts.
+
+### v3.2.0 - first-batch responsiveness and cleaner card text
+Changes vs v3.1.0:
+1. **FIRST TRANSCRIPT REFRESH**: suggestions try immediately when the first transcript chunk arrives instead of waiting for the next timer tick.
+2. **LOWER READINESS FLOOR**: minimum transcript length lowered from 220 to 120 characters so a real 30-second chunk can produce cards.
+3. **NO VISIBLE ACTION PREFIXES**: previews still include actionable wording, but cards no longer show redundant prefixes like `Ask:`, `Raise:`, or `Clarify:`.
 
 ## Reproducing
 

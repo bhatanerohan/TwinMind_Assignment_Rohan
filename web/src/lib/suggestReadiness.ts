@@ -1,4 +1,4 @@
-export const MIN_SUGGEST_TRANSCRIPT_CHARS = 220;
+export const MIN_SUGGEST_TRANSCRIPT_CHARS = 120;
 
 export function stripSpeakerLabels(transcript: string): string {
   return transcript

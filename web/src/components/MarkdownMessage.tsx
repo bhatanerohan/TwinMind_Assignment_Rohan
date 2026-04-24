@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -7,7 +8,7 @@ interface MarkdownMessageProps {
   content: string;
 }
 
-export default function MarkdownMessage({ content }: MarkdownMessageProps) {
+function MarkdownMessage({ content }: MarkdownMessageProps) {
   return (
     <div className="text-[14px] text-slate-200 leading-relaxed space-y-3 break-words">
       <ReactMarkdown
@@ -128,3 +129,5 @@ export default function MarkdownMessage({ content }: MarkdownMessageProps) {
     </div>
   );
 }
+
+export default memo(MarkdownMessage);

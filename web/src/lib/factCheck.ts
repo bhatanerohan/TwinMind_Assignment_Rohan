@@ -18,12 +18,14 @@ interface PreviousSuggestionLite {
   preview: string;
 }
 
-const STRONG_FACT_PATTERNS: readonly RegExp[] = [
-  /\b\d+(?:\.\d+)?(?:%|k|m|b|K|M|B|ms|MB|GB|TB)?\b/,
-  /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|fifteen|thirty|sixty)\s+(?:second|seconds|minute|minutes|hour|hours|day|days|week|weeks|month|months|year|years)\b/i,
-  /\b(?:max(?:imum)?|minimum|min|at least|at most|up to|under|over|less than|more than)\b/i,
-  /\b(?:latency|uptime|availability|throughput|qps|rps|tps|dau|mau|rpm|tpm|bitrate|resolution|retention)\b/i,
-];
+const NUMERIC_CLAIM_PATTERN =
+  /\b(?:\d+(?:\.\d+)?(?:%|k|m|b|K|M|B|ms|MB|GB|TB)?|one|two|three|four|five|six|seven|eight|nine|ten|fifteen|thirty|sixty)\b/i;
+
+const DECISION_METRIC_PATTERN =
+  /\b(?:price|pricing|cost|budget|seat|seats|base|salary|equity|bonus|band|level|sla|uptime|availability|latency|p50|p95|p99|throughput|qps|rps|tps|dau|mau|rpm|tpm|bitrate|resolution|retention|drop-off|conversion|limit|cap|maximum|max|min|minimum|under|over|before|after|within|deadline|region|regions|compliance|residency)\b/i;
+
+const BOUNDED_CLAIM_PATTERN =
+  /\b(?:tops out|lands? between|range is|band is|fixed per|must be|has to|only supports?|guarantees?|commits? to|requires?|allows?|blocks?|limited to|up to|at least|at most|no more than|less than|more than)\b/i;
 
 const STOPWORDS: ReadonlySet<string> = new Set([
   "a",
@@ -103,7 +105,11 @@ function topicTokens(text: string): string[] {
 }
 
 function lineHasStrongFactClaim(line: string): boolean {
-  return STRONG_FACT_PATTERNS.some((pattern) => pattern.test(line));
+  const hasNumericClaim = NUMERIC_CLAIM_PATTERN.test(line);
+  const hasDecisionMetric = DECISION_METRIC_PATTERN.test(line);
+  const hasBoundedClaim = BOUNDED_CLAIM_PATTERN.test(line);
+
+  return hasNumericClaim && (hasDecisionMetric || hasBoundedClaim);
 }
 
 function overlapsPriorSuggestion(

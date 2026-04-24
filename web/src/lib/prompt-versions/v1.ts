@@ -1,7 +1,7 @@
 /**
  * Suggestion prompt v1.0.0 — "STEP 1 silent assessment + hard routing rules"
  *
- * Baseline version ported from the inline prompt that shipped pre-eval-harness.
+ * Baseline version extracted from the inline prompt that shipped pre-eval-harness.
  * Introduced the two-step structure:
  *   - STEP 1 SILENT ASSESSMENT: depth, covered topics, factual claims,
  *     question-asked-of-you — the model commits to answers before generating.
@@ -16,10 +16,9 @@
  *   - Premature suggestions: ~25% of cards
  *   - Residual repetition: ~5 re-raises per 9-batch session
  *
- * Change history: this is the starting point. Subsequent versions (v2+) will
- * stack improvements from Prabhakar's v2.5 (foreground/background windowing,
- * algorithmic variety rule, preview-must-quote) plus our own fixes
- * (server-side fact-check injection, detail token-tightening, classifier tweak).
+ * Change history: this is the starting point. Subsequent versions (v2+) tighten
+ * foreground grounding, variety, preview specificity, server-side fact-check
+ * forcing, detail token limits, and classifier behavior.
  */
 
 export const SUGGESTION_PROMPT_V1 = `You are a live meeting copilot. Your job: whisper 3 useful, timely suggestions to the user, RIGHT NOW, based on what is being said.

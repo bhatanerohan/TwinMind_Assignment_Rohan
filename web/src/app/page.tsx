@@ -6,14 +6,23 @@ import TranscriptPanel from "@/components/TranscriptPanel";
 import SuggestionsPanel from "@/components/SuggestionsPanel";
 import ChatPanel from "@/components/ChatPanel";
 import SettingsDialog from "@/components/SettingsDialog";
+import { useSettings } from "@/lib/store";
 
 export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const apiKey = useSettings((s) => s.settings.apiKey);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (apiKey.trim().length === 0) {
+      setSettingsOpen(true);
+    }
+  }, [apiKey, mounted]);
 
   if (!mounted) {
     return (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, Settings } from "lucide-react";
+import { Download, FileText, Settings } from "lucide-react";
 import { useSession } from "@/lib/store";
 import { exportSession } from "@/lib/export";
 
@@ -37,9 +37,17 @@ export default function Header({ onOpenSettings }: HeaderProps) {
   const exportDisabled =
     transcript.length === 0 && batches.length === 0 && chat.length === 0;
 
-  const handleExport = () => {
+  const handleExportJson = () => {
     try {
-      exportSession();
+      exportSession("json");
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
+  const handleExportText = () => {
+    try {
+      exportSession("text");
     } catch (err) {
       console.error("Export failed", err);
     }
@@ -66,13 +74,23 @@ export default function Header({ onOpenSettings }: HeaderProps) {
       <div className="flex items-center gap-1">
         <button
           type="button"
-          onClick={handleExport}
+          onClick={handleExportJson}
           disabled={exportDisabled}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          title="Export session"
+          title="Export session as JSON"
         >
           <Download className="h-3.5 w-3.5" />
-          <span>Export</span>
+          <span>JSON</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleExportText}
+          disabled={exportDisabled}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          title="Export session as plain text"
+        >
+          <FileText className="h-3.5 w-3.5" />
+          <span>TXT</span>
         </button>
         <button
           type="button"

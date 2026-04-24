@@ -5,6 +5,14 @@ import {
 import { buildTranscriptContext } from "@/lib/transcriptContext";
 import type { Suggestion } from "@/lib/types";
 
+const MAX_CHAT_HISTORY_TURNS = 10;
+const MAX_CHAT_HISTORY_CHARS = 6_000;
+
+type ChatHistoryTurn = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export async function* streamChatReply(
   userMessage: string,
   fromSuggestion?: Suggestion,
@@ -25,10 +33,12 @@ export async function* streamChatReply(
 
   // Caller adds the user message + an empty assistant placeholder to the store
   // before invoking this generator, so drop the last two entries for history.
-  const history = session.chat.slice(0, -2).map((m) => ({
-    role: m.role,
-    content: m.content,
-  }));
+  const history = buildRecentChatHistory(
+    session.chat.slice(0, -2).map((m) => ({
+      role: m.role,
+      content: m.content,
+    })),
+  );
 
   const res = await fetch("/api/chat", {
     method: "POST",
@@ -89,11 +99,19 @@ export async function* streamChatReply(
 
         try {
           const parsed = JSON.parse(payload) as {
-            choices?: Array<{ delta?: { content?: unknown } }>;
+            choices?: Array<{
+              delta?: { content?: unknown };
+              finish_reason?: unknown;
+            }>;
           };
-          const content = parsed.choices?.[0]?.delta?.content;
+          const choice = parsed.choices?.[0];
+          const content = choice?.delta?.content;
           if (typeof content === "string" && content.length > 0) {
             yield content;
+          }
+          if (choice?.finish_reason === "length") {
+            yield '\n\n_[Output stopped because it hit the model response length limit. Ask "continue" to finish.]_';
+            return;
           }
         } catch {
           // skip malformed event
@@ -109,11 +127,19 @@ export async function* streamChatReply(
         if (payload === "[DONE]") return;
         try {
           const parsed = JSON.parse(payload) as {
-            choices?: Array<{ delta?: { content?: unknown } }>;
+            choices?: Array<{
+              delta?: { content?: unknown };
+              finish_reason?: unknown;
+            }>;
           };
-          const content = parsed.choices?.[0]?.delta?.content;
+          const choice = parsed.choices?.[0];
+          const content = choice?.delta?.content;
           if (typeof content === "string" && content.length > 0) {
             yield content;
+          }
+          if (choice?.finish_reason === "length") {
+            yield '\n\n_[Output stopped because it hit the model response length limit. Ask "continue" to finish.]_';
+            return;
           }
         } catch {
           // ignore
@@ -127,6 +153,40 @@ export async function* streamChatReply(
       // ignore
     }
   }
+}
+
+function buildRecentChatHistory(history: ChatHistoryTurn[]): ChatHistoryTurn[] {
+  const recent = history
+    .filter((turn) => turn.content.trim().length > 0)
+    .slice(-MAX_CHAT_HISTORY_TURNS);
+
+  const selected: ChatHistoryTurn[] = [];
+  let used = 0;
+
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const turn = recent[i];
+    const remaining = MAX_CHAT_HISTORY_CHARS - used;
+    if (remaining <= 0) break;
+
+    const content =
+      turn.content.length > remaining
+        ? truncateFromStart(turn.content, remaining)
+        : turn.content;
+
+    selected.unshift({
+      role: turn.role,
+      content,
+    });
+    used += content.length;
+  }
+
+  return selected;
+}
+
+function truncateFromStart(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  if (maxChars <= 3) return text.slice(-maxChars);
+  return `...${text.slice(-(maxChars - 3))}`;
 }
 
 export function formatChatError(err: unknown): string {

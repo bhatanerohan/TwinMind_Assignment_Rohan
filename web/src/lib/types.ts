@@ -43,6 +43,7 @@ export interface ChatMessage {
 
 export interface Settings {
   apiKey: string;
+  userRole: UserRole;
   suggestPrompt: string;
   detailPrompt: string;
   chatPrompt: string;
@@ -53,7 +54,6 @@ export interface Settings {
   chatModel: "openai/gpt-oss-120b";
   refreshIntervalMs: number;
   chunkIntervalMs: number;
-  userRole: UserRole;
 }
 
 export type MeetingType =
@@ -77,7 +77,6 @@ export interface SessionMeta {
 export interface SessionExport {
   exportedAt: string;
   sessionStartedAt: string | null;
-  userRole: UserRole;
   sessionMeta: {
     meetingType: MeetingType;
     meetingTypeConfidence: number;

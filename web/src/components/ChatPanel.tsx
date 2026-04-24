@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSession, useSettings } from "@/lib/store";
 import { streamChatReply, formatChatError } from "@/lib/chat";
+import { appendBufferedStream } from "@/lib/streamBuffer";
 import PanelHeader from "@/components/PanelHeader";
 import MarkdownMessage from "@/components/MarkdownMessage";
 
@@ -51,9 +52,9 @@ export default function ChatPanel() {
       createdAt: Date.now(),
     });
     try {
-      for await (const token of streamChatReply(text)) {
-        updateChatMessage(assistantId, (prev) => prev + token);
-      }
+      await appendBufferedStream(streamChatReply(text), (chunk) =>
+        updateChatMessage(assistantId, (prev) => prev + chunk),
+      );
     } catch (err) {
       console.error("streamChatReply failed", err);
       const msg = formatChatError(err);

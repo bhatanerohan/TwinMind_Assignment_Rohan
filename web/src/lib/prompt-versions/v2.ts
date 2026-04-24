@@ -1,16 +1,16 @@
 /**
- * Suggestion prompt v2.0.0 — stacked fixes borrowed from Prabhakar v2.5 + our HANDOFF §5 known-issues
+ * Suggestion prompt v2.0.0 - stacked fixes from manual audit + known issues
  *
  * Changes vs v1.0.0 (all in STEP 2, plus PREVIEW QUALITY section):
  *
- *   1. FOREGROUND RULE (new, after DEPTH-MATCH). Ported from Prabhakar v2.5 lines 58-59.
- *      Treats the LAST 2 chunks as foreground — trigger quote MUST come from there.
+ *   1. FOREGROUND RULE (new, after DEPTH-MATCH).
+ *      Treats the LAST 2 chunks as foreground - trigger quote MUST come from there.
  *      Targets our measured ~25% premature rate (HANDOFF §5): the previous DEPTH rule
  *      caught "architecture during scoping" but let through "re-raise stale topic
  *      from 3 chunks ago."
  *
- *   2. ALGORITHMIC VARIETY (replaces Rule 5 soft wording with arithmetic). Ported from
- *      Prabhakar v2.5 lines 73-78. Converts "≥ 2 distinct kinds" into "at MOST 1 of
+ *   2. ALGORITHMIC VARIETY (replaces Rule 5 soft wording with arithmetic).
+ *      Converts "at least 2 distinct kinds" into "at MOST 1 of
  *      your 3 kinds may appear in PREV_KINDS." Targets our variety criterion
  *      (baseline likely 2.1-2.4 — hard rule held 100% in TikTok audit but felt
  *      mechanical).

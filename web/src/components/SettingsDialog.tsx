@@ -171,33 +171,6 @@ export default function SettingsDialog({
 
         <section className="mb-6">
           <h3 className="mb-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-400">
-            Your role in this conversation
-          </h3>
-          <select
-            value={settings.userRole}
-            onChange={(e) =>
-              updateSettings({
-                userRole: e.target.value as
-                  | "unknown"
-                  | "host"
-                  | "guest"
-                  | "observer",
-              })
-            }
-            className="rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-sky-500/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-          >
-            <option value="unknown">Not set — disable speaker detection</option>
-            <option value="host">Host (interviewer, seller, facilitator)</option>
-            <option value="guest">Guest (candidate, prospect, customer)</option>
-            <option value="observer">Observer (listening to others' conversation)</option>
-          </select>
-          <p className="mt-1.5 text-xs text-slate-500">
-            Used as a high-level framing hint only. Transcript chunks are no longer auto-labeled as YOU or OTHER because live chunks can mix speakers.
-          </p>
-        </section>
-
-        <section className="mb-6">
-          <h3 className="mb-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-400">
             Whisper model
           </h3>
           <select

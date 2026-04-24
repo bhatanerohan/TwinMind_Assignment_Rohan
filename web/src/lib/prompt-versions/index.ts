@@ -22,6 +22,8 @@ export const ALL_VERSIONS = {
   "1.0.0": SUGGESTION_PROMPT_V1,
   "2.0.0": SUGGESTION_PROMPT_V2,
   "3.0.0": SUGGESTION_PROMPT_V3,
+  "3.1.0": SUGGESTION_PROMPT_V3,
+  "3.2.0": SUGGESTION_PROMPT_V3,
 };
 
 // ========================================================================
@@ -29,4 +31,4 @@ export const ALL_VERSIONS = {
 // change the two lines below. No other file needs to change.
 // ========================================================================
 export const DEFAULT_SUGGEST_PROMPT = SUGGESTION_PROMPT_V3;
-export const CURRENT_SUGGESTION_VERSION = "3.0.0";
+export const CURRENT_SUGGESTION_VERSION = "3.2.0";

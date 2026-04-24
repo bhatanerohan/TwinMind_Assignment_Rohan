@@ -1,12 +1,9 @@
 /**
- * Synthetic transcripts for the prompt eval harness.
+ * Original synthetic transcripts for the prompt eval harness.
  *
- * Ported from Prabhakar Elavala's eval-prompts.ts (5 transcripts × 8 chunks each).
- * Original speaker names stripped and replaced with [YOU] / [OTHER] prefixes to
- * match our /api/suggest/route.ts transcript format. Role assignments chosen to
- * exercise both host and guest framings across meeting types.
- *
- * Each transcript covers ~4 minutes at one chunk per ~30s.
+ * Each scenario covers roughly four minutes at one chunk per refresh cycle.
+ * Chunks intentionally omit speaker labels. Eval still includes a userRole hint
+ * because the product exposes it as high-level meeting framing.
  */
 
 import type { MeetingType, UserRole } from "../../src/lib/types";
@@ -19,100 +16,95 @@ export interface EvalTranscript {
   chunks: string[];
 }
 
-// user = SDR / Rep (host)
-export const SALES_TRANSCRIPT: EvalTranscript = {
-  id: "sales",
-  label: "Sales Call",
+export const PROCUREMENT_REVIEW_TRANSCRIPT: EvalTranscript = {
+  id: "procurement-review",
+  label: "Procurement Review",
   meetingType: "sales",
   userRole: "host",
   chunks: [
-    "[OTHER] Thanks for jumping on. We're evaluating three vendors right now, including Notion and Airtable, and you're the third.",
-    "[OTHER] Our biggest concern is honestly data sovereignty — our CEO flagged it last week, she wants everything in EU regions.",
-    "[OTHER] Our budget decision needs to be finalized before end of Q3, so roughly six weeks from now.",
-    "[YOU] Totally hear you. We're actually one of the fastest growing databases on GitHub — 70k stars and counting.",
-    "[YOU] On data residency, we support EU-only deployment, all your data stays in Frankfurt or Dublin — your choice.",
-    "[OTHER] OK, but your pricing page only shows USD. Can you share the actual numbers for a 50-seat workspace with EU hosting?",
-    "[YOU] I'll send those over. Most customers in your range land somewhere between twelve and eighteen thousand annually.",
-    "[OTHER] And how does that compare to your Notion integration story? We're already running Notion for docs.",
+    "Thanks for joining. We are comparing three vendors for the analytics workspace migration, and the finance team wants a recommendation by May 15.",
+    "The blocker is data residency. Our legal team says customer event data must stay inside Canada, including backups and support exports.",
+    "We also need SSO, SCIM provisioning, and an audit log export because our internal security review starts next week.",
+    "Our platform has regional storage controls and a dedicated enterprise support queue. The current public case study mentions 45% faster analyst onboarding.",
+    "For Canada-only storage, we can pin primary data to Montreal and keep disaster recovery in Toronto. I need to confirm whether support logs follow the same boundary.",
+    "Can you give me a real price range for 120 seats? The public page only lists the team tier, and procurement needs a number before they open security review.",
+    "For 120 seats, similar customers usually land between 38K and 52K annually depending on retention and support package.",
+    "If we already have Looker dashboards, I need to understand whether your migration tool preserves dashboard permissions or only moves the raw datasets.",
   ],
 };
 
-// user = Interviewer (host)
-export const INTERVIEW_TRANSCRIPT: EvalTranscript = {
-  id: "interview",
-  label: "Job Interview (Interviewer speaking)",
+export const DESIGN_INTERVIEW_TRANSCRIPT: EvalTranscript = {
+  id: "design-interview",
+  label: "System Design Interview",
   meetingType: "interview",
   userRole: "host",
   chunks: [
-    "[YOU] So tell me about yourself — what's your background and what are you looking for next?",
-    "[OTHER] I've been a backend engineer for about seven years, mostly Python and Go, lots of distributed systems work at my last two companies.",
-    "[YOU] Cool. What's the biggest technical challenge you've faced recently?",
-    "[OTHER] Honestly, scaling issues. We had some scaling issues that we worked through as a team.",
-    "[YOU] Can you be more specific? What kind of scale, what did you actually change?",
-    "[OTHER] Uh, it was read-heavy traffic, and we added some caching. I don't remember the exact numbers.",
-    "[YOU] OK. And what interests you about this role specifically?",
-    "[OTHER] I saw you're doing a lot with real-time systems and that's something I want to go deeper on.",
+    "Let's do a system design exercise. Design a collaborative notes app where multiple users can edit the same document at the same time.",
+    "I would start by clarifying scope. Are we focused on real-time editing, comments, sharing permissions, or offline sync as well?",
+    "Good question. Focus on real-time editing and basic sharing. Offline support is out of scope for this round.",
+    "Okay. I would model documents, users, and permissions first, then use a websocket gateway for active editing sessions.",
+    "What concurrency approach would you choose? I want to hear how you handle two people editing the same paragraph.",
+    "I know operational transforms are one option, and CRDTs are another. I have used CRDTs once, but not at a very large scale.",
+    "Assume 50K daily active users and peak 2K concurrent editors. What would you measure to know if the editing path is healthy?",
+    "I would track edit acknowledgement latency, conflict resolution rate, websocket reconnects, and document save failures.",
   ],
 };
 
-// user = Alex (host)
-export const TECHNICAL_TRANSCRIPT: EvalTranscript = {
-  id: "technical",
-  label: "Technical Discussion (REST → GraphQL migration)",
+export const INCIDENT_REVIEW_TRANSCRIPT: EvalTranscript = {
+  id: "incident-review",
+  label: "Incident Review",
   meetingType: "technical",
   userRole: "host",
   chunks: [
-    "[YOU] So we ran the GraphQL pilot for a month on the search endpoints and saw 40% latency improvement.",
-    "[OTHER] 40% is huge. Was that p50 or p99?",
-    "[YOU] That was p50. p99 was only 12% better, which honestly surprised me.",
-    "[OTHER] Did you account for the N+1 query risk? DataLoader helps but it's not free.",
-    "[YOU] Yeah we used DataLoader, and we're caching at the resolver level with Redis.",
-    "[OTHER] OK so the question is, do we migrate everything or keep REST for the write paths?",
-    "[OTHER] I'd keep REST for writes. GraphQL mutations are where most of the operational pain comes from.",
-    "[YOU] Agreed. Also we need to think about schema stitching vs federation before we commit.",
+    "The checkout API incident started at 10:05 UTC. Error rate went from 0.2% to 8% in about six minutes.",
+    "The deploy at 9:58 added a new fraud-score call. It was supposed to timeout after 150 milliseconds but some requests hung for more than two seconds.",
+    "Database CPU also spiked, but I think that was secondary because the app retried the same payment authorization three times.",
+    "We rolled back at 10:27 and the error rate recovered by 10:34. The question is whether rollback was enough or we need a circuit breaker.",
+    "The fraud vendor's SLA says p95 under 120 milliseconds, but we saw p95 around 900 milliseconds during the incident.",
+    "If we add a circuit breaker, we need to decide whether failed fraud checks block checkout or move the order into manual review.",
+    "I prefer manual review for low-risk orders, but compliance may require blocking high-risk orders when the fraud score is unavailable.",
+    "Before we write action items, let's separate user impact, detection gaps, and the permanent fix for third-party dependency failure.",
   ],
 };
 
-// user = Candidate (guest)
-export const NEGOTIATION_TRANSCRIPT: EvalTranscript = {
-  id: "negotiation",
-  label: "Salary Negotiation (Candidate speaking)",
+export const OFFER_DISCUSSION_TRANSCRIPT: EvalTranscript = {
+  id: "offer-discussion",
+  label: "Offer Discussion",
   meetingType: "other",
   userRole: "guest",
   chunks: [
-    "[OTHER] So we're excited to move forward with an offer. Before we finalize, what range were you thinking?",
-    "[YOU] Based on my research and my current comp, I was thinking around 150K base.",
-    "[OTHER] I really appreciate you sharing. Unfortunately our band for this level tops out at 130K.",
-    "[YOU] Hmm. That's a meaningful gap. Can you tell me more about the band structure?",
-    "[OTHER] Sure — we have 5 levels, and this role is L3. L4 starts at 140 but requires more senior scope.",
-    "[YOU] Is there flexibility on equity, or signing, if base is fixed?",
-    "[OTHER] Equity is generally fixed per level. Signing bonuses we can sometimes negotiate, usually 10-15K.",
-    "[OTHER] We also do annual merit reviews in March, so there's a path for growth inside the band.",
+    "We are excited to move forward. The offer is 138K base, 12K signing bonus, and standard equity for level P3.",
+    "Thank you. I am excited too. I was hoping to understand how flexible the base and equity pieces are before I respond.",
+    "Base is the hardest part. The P3 band tops out at 145K, and this offer is already near the top of that band.",
+    "That helps. My competing conversation is closer to 150K base, so I want to see if we can close some of that gap.",
+    "We may be able to move the signing bonus to 18K, but equity refreshers are normally reviewed after the first performance cycle.",
+    "Could we document the refresher review timing in the offer letter, or is that handled only after start date?",
+    "We can include a note about eligibility for the March review cycle, but not a guaranteed refresher amount.",
+    "I need to decide by Friday. If base cannot move, I would like to understand whether title or remote-work flexibility is negotiable.",
   ],
 };
 
-// user = Sam (facilitator / host)
-export const BRAINSTORM_TRANSCRIPT: EvalTranscript = {
-  id: "brainstorm",
-  label: "Product Brainstorm (Onboarding AI)",
+export const ONBOARDING_PLANNING_TRANSCRIPT: EvalTranscript = {
+  id: "onboarding-planning",
+  label: "Onboarding Planning",
   meetingType: "planning",
   userRole: "host",
   chunks: [
-    "[YOU] OK, quick brainstorm. How can we make onboarding less painful? Current drop-off is 60% at step 3.",
-    "[OTHER] What if we added AI to the onboarding flow? Like an assistant that just talks you through it.",
-    "[YOU] Interesting. What would that actually look like in the UI?",
-    "[OTHER] I don't know, like a chat in the corner?",
-    "[OTHER] I worry a chat bot feels like an escape hatch, not a fix. We should fix the actual friction at step 3 first.",
-    "[YOU] What IS the friction at step 3 exactly? Is it the form, the field count, something else?",
-    "[OTHER] It's mostly the 'workspace settings' page — 14 fields and half of them are unclear.",
-    "[OTHER] OK so maybe AI isn't the answer, maybe it's cutting the form in half.",
+    "Let's focus on activation. Trial users are dropping at the workspace setup step, and only 41% reach the invite-teammates screen.",
+    "The current setup page asks for company size, use case, data source, region, compliance needs, and notification preferences all at once.",
+    "Support tickets mention that people do not know what data source means, especially if they are just testing with a sample CSV.",
+    "One idea is an AI helper that explains each field, but I worry that adds another widget instead of reducing friction.",
+    "Agreed. We should first identify which fields are required for product value and which fields are only useful for sales qualification.",
+    "The data team says region and compliance needs drive routing, but notification preferences can definitely wait until later.",
+    "If we cut the first page from 12 fields to 5, we should A/B test completion rate and downstream invite rate, not just page submits.",
+    "Before design starts, we need a crisp MVP: required fields, optional fields, and the event names analytics should track.",
   ],
 };
 
 export const ALL_TRANSCRIPTS: EvalTranscript[] = [
-  SALES_TRANSCRIPT,
-  INTERVIEW_TRANSCRIPT,
-  TECHNICAL_TRANSCRIPT,
-  NEGOTIATION_TRANSCRIPT,
-  BRAINSTORM_TRANSCRIPT,
+  PROCUREMENT_REVIEW_TRANSCRIPT,
+  DESIGN_INTERVIEW_TRANSCRIPT,
+  INCIDENT_REVIEW_TRANSCRIPT,
+  OFFER_DISCUSSION_TRANSCRIPT,
+  ONBOARDING_PLANNING_TRANSCRIPT,
 ];

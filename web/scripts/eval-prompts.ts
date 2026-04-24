@@ -12,18 +12,12 @@
  *   cd web
  *   GROQ_API_KEY=gsk_... npm run eval     (or rely on ../scripts/.env)
  *
- * Ported from Prabhakar Elavala's repo-audit/prabhakar1234pr-twinmind/scripts/
- * eval-prompts.ts with these adaptations:
- *   - Raw fetch instead of @ai-sdk/groq / generateObject / zod (matches our
- *     existing src/lib/groq.ts style, no new deps).
- *   - Schema adapted to our suggestion shape: { kind, title, preview } (no
- *     fullContext field).
- *   - User message construction mirrors /api/suggest/route.ts exactly
- *     (MEETING_TYPE / USER_ROLE / TRANSCRIPT_CONTEXT / PREVIOUSLY_SHOWN_SUGGESTIONS).
- *   - Judge model is openai/gpt-oss-120b (same as target — user explicit
- *     choice; accepts judge-is-generator bias risk).
- *   - Cycle pause bumped 3s → 5s to account for 120B judge slowness vs his 20B.
- *   - 500ms pause between judge calls within a cycle to stay under 8K TPM.
+ * The harness mirrors our production /api/suggest prompt construction and uses
+ * original synthetic scenarios that exercise sales, interview, technical,
+ * negotiation, and planning conversations.
+ *
+ * Judge model defaults to the same Groq-hosted model as generation so the eval
+ * remains cheap and easy to reproduce.
  */
 
 import { loadEnv } from "./load-env";
@@ -64,6 +58,13 @@ const VALID_KINDS: ReadonlySet<SuggestionKind> = new Set([
   "talking-point",
   "clarify",
 ]);
+
+function stripActionPrefix(value: string): string {
+  const cleaned = value
+    .replace(/^(ask|say|verify|raise|clarify|bring up)\s*[:\-]\s*/i, "")
+    .trim();
+  return cleaned.length > 0 ? cleaned : value.trim();
+}
 
 interface Criterion {
   key: string;
@@ -155,22 +156,6 @@ async function groqChat(body: GroqChatBody): Promise<Response> {
   });
 }
 
-// ---------- Role hint (mirrors /api/suggest/route.ts:193-200) ----------
-
-function roleHintText(userRole: UserRole): string {
-  switch (userRole) {
-    case "host":
-      return "USER_ROLE: host — the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the guest's answers.";
-    case "guest":
-      return "USER_ROLE: guest — the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask.";
-    case "observer":
-      return "USER_ROLE: observer — the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
-    case "unknown":
-    default:
-      return "USER_ROLE: unknown — frame suggestions neutrally (avoid assuming whether the user is asking or answering).";
-  }
-}
-
 // ---------- Prompt construction (mirrors /api/suggest/route.ts) ----------
 
 function renderPrevious(prev: Suggestion[]): string {
@@ -191,6 +176,20 @@ function windowTranscript(chunks: string[], window: number): string {
     endedAt: baseTime + (index + 1) * 30_000,
   }));
   return buildTranscriptContext(transcriptChunks, 6_000);
+}
+
+function roleHintText(userRole: UserRole): string {
+  switch (userRole) {
+    case "host":
+      return "USER_ROLE: host - the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the other side's answers.";
+    case "guest":
+      return "USER_ROLE: guest - the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask.";
+    case "observer":
+      return "USER_ROLE: observer - the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
+    case "unknown":
+    default:
+      return "USER_ROLE: unknown - frame suggestions neutrally; avoid assuming whether the user is asking or answering.";
+  }
 }
 
 function buildUserContent(
@@ -275,8 +274,8 @@ async function callSuggestionsOnce(
     }
     out.push({
       kind: rec.kind as SuggestionKind,
-      title: rec.title,
-      preview: rec.preview,
+      title: stripActionPrefix(rec.title),
+      preview: stripActionPrefix(rec.preview),
     });
   }
   return out;
@@ -403,6 +402,7 @@ async function scoreVariety(
   const judgePrompt = `Score the VARIETY of a batch of 3 live meeting suggestions on a scale of 0-3.
 
 Meeting type: ${transcript.meetingType}
+User role: ${transcript.userRole}
 
 Meeting transcript:
 ${transcriptText}
@@ -504,7 +504,7 @@ function buildReport(batches: ScoredBatch[]): string {
   const lines: string[] = [];
   const timestamp = new Date().toISOString();
 
-  lines.push(`## TwinMind Prompt Evaluation Report`);
+  lines.push(`## TwinMind Suggestion Quality Report`);
   lines.push(`Prompt version: ${CURRENT_SUGGESTION_VERSION}`);
   lines.push(`Generated: ${timestamp}`);
   lines.push(`Target model: ${TARGET_MODEL}`);
@@ -554,8 +554,7 @@ function buildReport(batches: ScoredBatch[]): string {
   );
   lines.push("");
 
-  // Kind distribution (our own extension vs Prabhakar's report — he doesn't
-  // print this but we care about the fact-check-is-0 problem specifically).
+  // Kind distribution helps catch over-reliance on one card type.
   lines.push(`### Kind Distribution (${totalSuggestions} total cards)`);
   lines.push("");
   lines.push(`| Kind | Count | % |`);

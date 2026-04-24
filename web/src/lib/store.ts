@@ -124,22 +124,28 @@ export const useSettings = create<SettingsState>()(
     {
       name: "twinmind-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 7,
+      version: 9,
       migrate: (persisted: unknown, version: number) => {
         const p = (persisted ?? {}) as { settings?: Partial<Settings> };
         const oldSettings = p.settings ?? {};
-        if (version < 7) {
+        const normalizedSettings = {
+          ...DEFAULT_SETTINGS,
+          ...oldSettings,
+        };
+        if (version < 9) {
           return {
             settings: {
-              ...DEFAULT_SETTINGS,
-              ...oldSettings,
+              ...normalizedSettings,
               suggestPrompt: DEFAULT_SETTINGS.suggestPrompt,
               detailPrompt: DEFAULT_SETTINGS.detailPrompt,
               chatPrompt: DEFAULT_SETTINGS.chatPrompt,
             },
           } as SettingsState;
         }
-        return p as SettingsState;
+        return {
+          ...p,
+          settings: normalizedSettings,
+        } as SettingsState;
       },
     },
   ),
