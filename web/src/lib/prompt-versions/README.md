@@ -53,7 +53,7 @@ Changes vs v2.0.0:
 Paired code changes:
 - `factCheck.ts`: fact-check forcing now looks only at strong claims in the last 2 transcript lines and skips topics already covered by recent suggestions.
 - `transcriptContext.ts`: suggestions, detail, chat, and eval now use dense recent context plus sparse older excerpts instead of dropping all older transcript once the character limit is reached.
-- `TranscriptPanel.tsx` / settings: per-chunk YOU/OTHER classification is no longer required for suggestion quality; `userRole` remains as a high-level framing hint.
+- `TranscriptPanel.tsx` / settings: per-chunk YOU/OTHER classification was removed; suggestions rely on meeting type plus transcript context.
 - `DEFAULT_DETAIL_PROMPT`: external numbers, product policies, limits, and benchmarks must be framed as transcript-grounded assumptions or verification items, not invented facts.
 - `store.ts`: persist v5 -> v9 so existing users pick up v3/context/detail/chat-prompt updates without losing non-prompt settings.
 

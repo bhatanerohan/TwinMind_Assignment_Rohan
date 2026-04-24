@@ -48,7 +48,6 @@ export async function fetchSuggestions(): Promise<SuggestionBatch | null> {
       previousSuggestions,
       model: settings.chatModel,
       meetingType: currentMeetingType,
-      userRole: settings.userRole,
     }),
   });
 

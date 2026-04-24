@@ -35,7 +35,6 @@ import type {
   Suggestion,
   SuggestionKind,
   TranscriptChunk,
-  UserRole,
 } from "../src/lib/types";
 import { hasFactualClaim } from "../src/lib/factCheck";
 import { buildTranscriptContext, stripInlineSpeakerLabel } from "../src/lib/transcriptContext";
@@ -121,7 +120,6 @@ interface ScoredBatch {
   transcriptId: string;
   transcriptLabel: string;
   meetingType: MeetingType;
-  userRole: UserRole;
   cycle: number;
   suggestions: ScoredSuggestion[];
   varietyScore: { score: number; reason: string };
@@ -178,23 +176,8 @@ function windowTranscript(chunks: string[], window: number): string {
   return buildTranscriptContext(transcriptChunks, 6_000);
 }
 
-function roleHintText(userRole: UserRole): string {
-  switch (userRole) {
-    case "host":
-      return "USER_ROLE: host - the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the other side's answers.";
-    case "guest":
-      return "USER_ROLE: guest - the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask.";
-    case "observer":
-      return "USER_ROLE: observer - the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
-    case "unknown":
-    default:
-      return "USER_ROLE: unknown - frame suggestions neutrally; avoid assuming whether the user is asking or answering.";
-  }
-}
-
 function buildUserContent(
   meetingType: MeetingType,
-  userRole: UserRole,
   transcriptText: string,
   prev: Suggestion[],
 ): string {
@@ -204,9 +187,8 @@ function buildUserContent(
     : "";
   return (
     `MEETING_TYPE: ${meetingType}\n` +
-    `${roleHintText(userRole)}\n\n` +
     `${factCheckHint}` +
-    `TRANSCRIPT_CONTEXT (dense recent transcript plus sparse older excerpts; speaker labels may be omitted):\n${transcriptText}\n\n` +
+    `TRANSCRIPT_CONTEXT (dense recent transcript plus sparse older excerpts):\n${transcriptText}\n\n` +
     `PREVIOUSLY_SHOWN_SUGGESTIONS (do not repeat or near-repeat these):\n${previousBlock}\n\n` +
     `Return exactly 3 suggestions as strict JSON matching the schema.`
   );
@@ -283,11 +265,10 @@ async function callSuggestionsOnce(
 
 async function callSuggestions(
   meetingType: MeetingType,
-  userRole: UserRole,
   transcriptText: string,
   prev: Suggestion[],
 ): Promise<GeneratedSuggestion[]> {
-  const userContent = buildUserContent(meetingType, userRole, transcriptText, prev);
+  const userContent = buildUserContent(meetingType, transcriptText, prev);
   try {
     return await callSuggestionsOnce(userContent, 1);
   } catch (err) {
@@ -372,7 +353,6 @@ async function scoreCriterion(
   const judgePrompt = `You are evaluating the quality of a live meeting suggestion. Score the following on a scale of 0-3.
 
 Meeting type: ${transcript.meetingType}
-User role: ${transcript.userRole}
 
 Meeting transcript context:
 ${transcriptText}
@@ -402,7 +382,6 @@ async function scoreVariety(
   const judgePrompt = `Score the VARIETY of a batch of 3 live meeting suggestions on a scale of 0-3.
 
 Meeting type: ${transcript.meetingType}
-User role: ${transcript.userRole}
 
 Meeting transcript:
 ${transcriptText}
@@ -440,7 +419,6 @@ async function runCycle(
 
   const generated = await callSuggestions(
     transcript.meetingType,
-    transcript.userRole,
     transcriptText,
     prev,
   );
@@ -488,7 +466,6 @@ async function runCycle(
       transcriptId: transcript.id,
       transcriptLabel: transcript.label,
       meetingType: transcript.meetingType,
-      userRole: transcript.userRole,
       cycle,
       suggestions: scored,
       varietyScore,
@@ -666,7 +643,7 @@ async function main(): Promise<void> {
   const CYCLE_PAUSE_MS = 15_000;
 
   for (const t of transcripts) {
-    console.log(`\n[eval] === ${t.label} (${t.meetingType} / role=${t.userRole}) ===`);
+    console.log(`\n[eval] === ${t.label} (${t.meetingType}) ===`);
     let prev: Suggestion[] = [];
     for (let cycle = 1; cycle <= maxCycles; cycle++) {
       console.log(`[eval] ${t.label} cycle ${cycle}`);

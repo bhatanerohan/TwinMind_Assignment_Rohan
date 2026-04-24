@@ -11,7 +11,7 @@
  *
  * Eval scores: TBD (this is the baseline to be measured).
  *
- * Known manual-audit issues going in (from HANDOFF.md §5):
+ * Known manual-audit issues going in:
  *   - Fact-check rate: 0% across 27 cards (TikTok system-design session, 2026-04-19)
  *   - Premature suggestions: ~25% of cards
  *   - Residual repetition: ~5 re-raises per 9-batch session

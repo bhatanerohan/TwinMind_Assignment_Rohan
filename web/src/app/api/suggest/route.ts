@@ -1,7 +1,7 @@
 import { groqChat, readApiKeyFromRequest, type GroqChatMessage } from "@/lib/groq";
 import { hasFactualClaim } from "@/lib/factCheck";
 import { hasEnoughTranscriptForSuggestions } from "@/lib/suggestReadiness";
-import type { MeetingType, Suggestion, SuggestionKind, UserRole } from "@/lib/types";
+import type { MeetingType, Suggestion, SuggestionKind } from "@/lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +12,6 @@ interface SuggestRequestBody {
   previousSuggestions: Array<{ title: string; preview: string }>;
   model: string;
   meetingType?: MeetingType;
-  userRole?: UserRole;
 }
 
 const VALID_KINDS: ReadonlySet<SuggestionKind> = new Set([
@@ -200,25 +199,14 @@ export async function POST(request: Request) {
       ? previousSuggestions.map((s) => `- ${s.title}: ${s.preview}`).join("\n")
       : "(none yet)";
 
-  const userRole: UserRole = body.userRole ?? "unknown";
-  const roleHint =
-    userRole === "unknown"
-      ? "USER_ROLE: unknown - frame suggestions neutrally; avoid assuming whether the user is asking or answering."
-      : userRole === "host"
-        ? "USER_ROLE: host - the user is leading (interviewer, seller, facilitator). Bias suggestions toward probing questions and reacting to the other side's answers."
-        : userRole === "guest"
-          ? "USER_ROLE: guest - the user is responding (candidate, prospect, customer). Bias suggestions toward answers the user might give and counter-questions the user could ask."
-          : "USER_ROLE: observer - the user is listening in on others' conversation. Frame suggestions as analytical commentary, not as things for the user to say.";
-
   const factCheckHint = hasFactualClaim(transcript ?? "", previousSuggestions ?? [])
     ? `FACTUAL_CLAIMS_DETECTED: yes. A "fact-check" card is MANDATORY — one of your 3 suggestions MUST have kind="fact-check" and quote the specific claim from the transcript.\n\n`
     : "";
 
   const userContent =
     `MEETING_TYPE: ${effectiveMeetingType}\n` +
-    `${roleHint}\n\n` +
     `${factCheckHint}` +
-    `TRANSCRIPT_CONTEXT (dense recent transcript plus sparse older excerpts; speaker labels may be omitted):\n${transcriptBlock}\n\n` +
+    `TRANSCRIPT_CONTEXT (dense recent transcript plus sparse older excerpts):\n${transcriptBlock}\n\n` +
     `PREVIOUSLY_SHOWN_SUGGESTIONS (do not repeat or near-repeat these):\n${previousBlock}\n\n` +
     `Return exactly 3 suggestions as strict JSON matching the schema.`;
 

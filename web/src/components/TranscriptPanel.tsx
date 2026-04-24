@@ -150,32 +150,14 @@ export default function TranscriptPanel() {
             The transcript scrolls and appends new chunks every ~{Math.round(chunkIntervalMs / 1000)} seconds while recording. Use the mic button above to start/stop. An export button is available in the header to pull the full session.
           </div>
         ) : (
-          transcript.map((chunk) => {
-            const speakerLabel =
-              chunk.speaker === "user"
-                ? { text: "YOU", cls: "text-sky-300 bg-sky-400/10 ring-sky-400/25" }
-                : chunk.speaker === "other"
-                  ? { text: "OTHER", cls: "text-violet-300 bg-violet-400/10 ring-violet-400/25" }
-                  : null;
-            return (
-              <p key={chunk.id} className="text-[14px] leading-relaxed text-slate-200">
-                <span className="text-[11px] text-slate-500 tabular-nums mr-2 align-baseline">
-                  {formatClock(chunk.startedAt)}
-                </span>
-                {speakerLabel && (
-                  <span
-                    className={
-                      "inline-block mr-2 px-1.5 py-0 rounded text-[10px] font-semibold tracking-[0.12em] ring-1 ring-inset align-baseline " +
-                      speakerLabel.cls
-                    }
-                  >
-                    {speakerLabel.text}
-                  </span>
-                )}
-                {chunk.text}
-              </p>
-            );
-          })
+          transcript.map((chunk) => (
+            <p key={chunk.id} className="text-[14px] leading-relaxed text-slate-200">
+              <span className="text-[11px] text-slate-500 tabular-nums mr-2 align-baseline">
+                {formatClock(chunk.startedAt)}
+              </span>
+              {chunk.text}
+            </p>
+          ))
         )}
         {error && (
           <p className="text-xs text-red-400 border border-red-500/30 bg-red-500/10 rounded-md px-2 py-1">

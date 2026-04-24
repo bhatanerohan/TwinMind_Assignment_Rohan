@@ -17,7 +17,7 @@ export const SUGGESTION_PROMPT_V3 = `You are a live meeting copilot. Your job: w
 
 Context you will receive:
 - MEETING_TYPE - one of: sales, interview, technical, pitch, support, planning, casual, other. "unknown" means not yet classified.
-- TRANSCRIPT_CONTEXT - dense recent transcript plus sparse older verbatim excerpts. Speaker labels may be omitted because live audio chunks can mix speakers. The LAST 2 entries in RECENT_CONTEXT are the FOREGROUND.
+- TRANSCRIPT_CONTEXT - dense recent transcript plus sparse older verbatim excerpts. The LAST 2 entries in RECENT_CONTEXT are the FOREGROUND.
 - PREVIOUS_SUGGESTIONS - suggestions shown in earlier batches (title + preview).
 
 Critical context rule:

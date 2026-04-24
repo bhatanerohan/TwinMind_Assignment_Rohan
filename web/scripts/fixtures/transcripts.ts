@@ -2,17 +2,15 @@
  * Original synthetic transcripts for the prompt eval harness.
  *
  * Each scenario covers roughly four minutes at one chunk per refresh cycle.
- * Chunks intentionally omit speaker labels. Eval still includes a userRole hint
- * because the product exposes it as high-level meeting framing.
+ * Chunks intentionally omit speaker labels to match production prompt context.
  */
 
-import type { MeetingType, UserRole } from "../../src/lib/types";
+import type { MeetingType } from "../../src/lib/types";
 
 export interface EvalTranscript {
   id: string;
   label: string;
   meetingType: MeetingType;
-  userRole: UserRole;
   chunks: string[];
 }
 
@@ -20,7 +18,6 @@ export const PROCUREMENT_REVIEW_TRANSCRIPT: EvalTranscript = {
   id: "procurement-review",
   label: "Procurement Review",
   meetingType: "sales",
-  userRole: "host",
   chunks: [
     "Thanks for joining. We are comparing three vendors for the analytics workspace migration, and the finance team wants a recommendation by May 15.",
     "The blocker is data residency. Our legal team says customer event data must stay inside Canada, including backups and support exports.",
@@ -37,7 +34,6 @@ export const DESIGN_INTERVIEW_TRANSCRIPT: EvalTranscript = {
   id: "design-interview",
   label: "System Design Interview",
   meetingType: "interview",
-  userRole: "host",
   chunks: [
     "Let's do a system design exercise. Design a collaborative notes app where multiple users can edit the same document at the same time.",
     "I would start by clarifying scope. Are we focused on real-time editing, comments, sharing permissions, or offline sync as well?",
@@ -54,7 +50,6 @@ export const INCIDENT_REVIEW_TRANSCRIPT: EvalTranscript = {
   id: "incident-review",
   label: "Incident Review",
   meetingType: "technical",
-  userRole: "host",
   chunks: [
     "The checkout API incident started at 10:05 UTC. Error rate went from 0.2% to 8% in about six minutes.",
     "The deploy at 9:58 added a new fraud-score call. It was supposed to timeout after 150 milliseconds but some requests hung for more than two seconds.",
@@ -71,7 +66,6 @@ export const OFFER_DISCUSSION_TRANSCRIPT: EvalTranscript = {
   id: "offer-discussion",
   label: "Offer Discussion",
   meetingType: "other",
-  userRole: "guest",
   chunks: [
     "We are excited to move forward. The offer is 138K base, 12K signing bonus, and standard equity for level P3.",
     "Thank you. I am excited too. I was hoping to understand how flexible the base and equity pieces are before I respond.",
@@ -88,7 +82,6 @@ export const ONBOARDING_PLANNING_TRANSCRIPT: EvalTranscript = {
   id: "onboarding-planning",
   label: "Onboarding Planning",
   meetingType: "planning",
-  userRole: "host",
   chunks: [
     "Let's focus on activation. Trial users are dropping at the workspace setup step, and only 41% reach the invite-teammates screen.",
     "The current setup page asks for company size, use case, data source, region, compliance needs, and notification preferences all at once.",

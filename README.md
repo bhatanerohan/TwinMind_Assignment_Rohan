@@ -92,7 +92,7 @@ web/
     transcriptContext.ts
 ```
 
-More implementation details are in `web/README.md` and `CODE_GUIDE.md`.
+More implementation details are in `web/README.md`.
 
 ## Tradeoffs
 

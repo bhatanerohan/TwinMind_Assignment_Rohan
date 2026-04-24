@@ -5,14 +5,9 @@ const MAX_OLDER_SAMPLES = 8;
 const MIN_OLDER_SAMPLE_CHARS = 220;
 const MAX_OLDER_SAMPLE_CHARS = 700;
 
-interface TranscriptContextOptions {
-  includeSpeakerLabels?: boolean;
-}
-
 export function buildTranscriptContext(
   chunks: TranscriptChunk[],
   maxChars: number,
-  options: TranscriptContextOptions = {},
 ): string {
   const safeMaxChars = Math.max(0, Math.floor(maxChars));
   if (safeMaxChars === 0 || chunks.length === 0) return "";
@@ -34,9 +29,9 @@ export function buildTranscriptContext(
   );
   const olderBudget = Math.max(0, contentBudget - recentBudget);
 
-  const recent = pickRecent(normalized, recentBudget, options);
+  const recent = pickRecent(normalized, recentBudget);
   const olderCandidates = normalized.slice(0, recent.firstIndex);
-  const older = pickSparseOlder(olderCandidates, olderBudget, options);
+  const older = pickSparseOlder(olderCandidates, olderBudget);
 
   const withOlder = renderSections(older.pieces, recent.pieces);
   if (withOlder.length <= safeMaxChars) return withOlder;
@@ -71,12 +66,11 @@ function renderSections(older: string[], recent: string[]): string {
 function pickRecent(
   chunks: TranscriptChunk[],
   budget: number,
-  options: TranscriptContextOptions,
 ): { pieces: string[]; firstIndex: number } {
   if (budget <= 0) {
     const last = chunks[chunks.length - 1];
     return {
-      pieces: [truncateFromStart(formatChunk(last, options), 500)],
+      pieces: [truncateFromStart(formatChunk(last), 500)],
       firstIndex: chunks.length - 1,
     };
   }
@@ -86,7 +80,7 @@ function pickRecent(
   let firstIndex = chunks.length;
 
   for (let i = chunks.length - 1; i >= 0; i--) {
-    const piece = formatChunk(chunks[i], options);
+    const piece = formatChunk(chunks[i]);
     const separator = pieces.length > 0 ? 1 : 0;
     const remaining = budget - used - separator;
 
@@ -106,7 +100,7 @@ function pickRecent(
   }
 
   return {
-    pieces: pieces.length > 0 ? pieces : [formatChunk(chunks[chunks.length - 1], options)],
+    pieces: pieces.length > 0 ? pieces : [formatChunk(chunks[chunks.length - 1])],
     firstIndex: Math.min(firstIndex, chunks.length - 1),
   };
 }
@@ -114,7 +108,6 @@ function pickRecent(
 function pickSparseOlder(
   chunks: TranscriptChunk[],
   budget: number,
-  options: TranscriptContextOptions,
 ): { pieces: string[] } {
   if (chunks.length === 0 || budget < MIN_OLDER_SAMPLE_CHARS) {
     return { pieces: [] };
@@ -136,7 +129,7 @@ function pickSparseOlder(
   let used = 0;
 
   for (const index of indexes) {
-    const piece = truncateMiddle(formatChunk(chunks[index], options), perSampleBudget);
+    const piece = truncateMiddle(formatChunk(chunks[index]), perSampleBudget);
     const separator = pieces.length > 0 ? 1 : 0;
     if (used + separator + piece.length > budget) break;
     pieces.push(piece);
@@ -146,19 +139,9 @@ function pickSparseOlder(
   return { pieces };
 }
 
-function formatChunk(
-  chunk: TranscriptChunk,
-  options: TranscriptContextOptions,
-): string {
+function formatChunk(chunk: TranscriptChunk): string {
   const time = Number.isFinite(chunk.startedAt) ? `[${formatClock(chunk.startedAt)}] ` : "";
-  const speaker = options.includeSpeakerLabels ? speakerLabel(chunk) : "";
-  return `${time}${speaker}${chunk.text}`;
-}
-
-function speakerLabel(chunk: TranscriptChunk): string {
-  if (chunk.speaker === "user") return "[YOU] ";
-  if (chunk.speaker === "other") return "[OTHER] ";
-  return "";
+  return `${time}${chunk.text}`;
 }
 
 function formatClock(ts: number): string {

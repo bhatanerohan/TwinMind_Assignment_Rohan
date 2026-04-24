@@ -32,11 +32,6 @@ interface SessionState {
   sessionMeta: SessionMeta;
 
   addTranscriptChunk: (chunk: TranscriptChunk) => void;
-  updateTranscriptChunkSpeaker: (
-    chunkId: string,
-    speaker: TranscriptChunk["speaker"],
-    confidence?: number,
-  ) => void;
   addBatch: (batch: SuggestionBatch) => void;
   addChatMessage: (message: ChatMessage) => void;
   updateLastChatMessage: (updater: (prev: string) => string) => void;
@@ -63,14 +58,6 @@ export const useSession = create<SessionState>((set) => ({
 
   addTranscriptChunk: (chunk) =>
     set((state) => ({ transcript: [...state.transcript, chunk] })),
-  updateTranscriptChunkSpeaker: (chunkId, speaker, confidence) =>
-    set((state) => ({
-      transcript: state.transcript.map((c) =>
-        c.id === chunkId
-          ? { ...c, speaker, speakerConfidence: confidence ?? c.speakerConfidence }
-          : c,
-      ),
-    })),
   addBatch: (batch) =>
     set((state) => ({ batches: [batch, ...state.batches] })),
   addChatMessage: (message) =>
@@ -124,15 +111,17 @@ export const useSettings = create<SettingsState>()(
     {
       name: "twinmind-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 9,
+      version: 10,
       migrate: (persisted: unknown, version: number) => {
         const p = (persisted ?? {}) as { settings?: Partial<Settings> };
-        const oldSettings = p.settings ?? {};
+        const { userRole: _unusedUserRole, ...oldSettings } =
+          (p.settings ?? {}) as Partial<Settings> & { userRole?: unknown };
+        void _unusedUserRole;
         const normalizedSettings = {
           ...DEFAULT_SETTINGS,
           ...oldSettings,
         };
-        if (version < 9) {
+        if (version < 10) {
           return {
             settings: {
               ...normalizedSettings,

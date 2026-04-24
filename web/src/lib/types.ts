@@ -1,17 +1,11 @@
 export type Role = "user" | "assistant";
 
-export type Speaker = "user" | "other" | "unknown";
-
 export interface TranscriptChunk {
   id: string;
   text: string;
   startedAt: number;
   endedAt: number;
-  speaker?: Speaker;
-  speakerConfidence?: number;
 }
-
-export type UserRole = "unknown" | "host" | "guest" | "observer";
 
 export type SuggestionKind =
   | "question"
@@ -43,7 +37,6 @@ export interface ChatMessage {
 
 export interface Settings {
   apiKey: string;
-  userRole: UserRole;
   suggestPrompt: string;
   detailPrompt: string;
   chatPrompt: string;
@@ -83,7 +76,7 @@ export interface SessionExport {
     meetingTypeRationale: string;
     classifiedAt: string | null;
   };
-  transcript: Array<{ startedAt: string; endedAt: string; text: string; speaker?: Speaker }>;
+  transcript: Array<{ startedAt: string; endedAt: string; text: string }>;
   batches: Array<{
     createdAt: string;
     suggestions: Array<{ kind: SuggestionKind; title: string; preview: string }>;

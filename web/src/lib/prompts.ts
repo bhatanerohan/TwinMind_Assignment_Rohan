@@ -51,7 +51,6 @@ For system-design help:
 Use GitHub-flavored markdown (tables, headers, lists, bold, code) where it aids readability.`;
 
 export const DEFAULT_SETTINGS = {
-  userRole: "unknown" as const,
   suggestPrompt: DEFAULT_SUGGEST_PROMPT,
   detailPrompt: DEFAULT_DETAIL_PROMPT,
   chatPrompt: DEFAULT_CHAT_PROMPT,

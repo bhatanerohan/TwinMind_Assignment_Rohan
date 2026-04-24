@@ -1,12 +1,8 @@
 # TwinMind Live Suggestions
 
-A live meeting copilot. Capture the conversation from your mic, see the transcript update every 30s, and get three fresh, context-aware suggestions (questions to ask, answers, talking points, fact-checks, clarifications) every 30s. Click any suggestion for an expanded answer in the chat column, or ask your own questions — all grounded in the running transcript. Export the whole session as JSON when you're done.
+A live meeting copilot. Capture the conversation from your mic, see the transcript update every 30s, and get three fresh, context-aware suggestions (questions to ask, answers, talking points, fact-checks, clarifications) every 30s. Click any suggestion for an expanded answer in the chat column, or ask your own questions — all grounded in the running transcript. Export the whole session as JSON or plain text when you're done.
 
 Single-page web app. No auth, no database, no server-side persistence. Your Groq API key lives only in the browser's localStorage.
-
-## Live demo
-
-`[Add once deployed]` — Vercel URL will go here. Repo is public on GitHub; the deployed app is a single-page web app.
 
 ## Stack
 
@@ -57,7 +53,7 @@ Open http://localhost:3000, click the gear icon in the header, and paste your Gr
 3. Speak normally. Every ~30s a new transcript chunk appears on the left and a fresh batch of 3 suggestions appears on top of the middle column.
 4. Click any suggestion card — an expanded, grounded answer streams into the right column.
 5. Type your own questions in the chat input at the bottom of the right column.
-6. Click **Export** in the header to download the full session (transcript + every suggestion batch + chat log) as JSON.
+6. Click **JSON** or **TXT** in the header to download the full session (transcript + every suggestion batch + chat log).
 
 ## Prompt strategy
 
@@ -77,11 +73,11 @@ To route suggestions correctly — a sales call deserves very different "questio
 
 The suggest prompt enforces:
 
-1. If a question was asked **of the user** in the recent transcript, include at least one `answer`.
-2. If a factual claim / number / company name was just stated, include at least one `fact-check`.
-3. If a likely-unfamiliar term or acronym was used, include at least one `clarify`.
-4. If the transcript is empty or under 200 chars, produce 3 **preparatory** suggestions tailored to the meeting type (things a person in this kind of conversation should be ready with — don't hallucinate content).
-5. Otherwise, prefer **variety of kind**. Never three of the same kind in a normal batch.
+1. The trigger for each card must come from the final one or two recent transcript entries.
+2. Previously shown topics are treated as off-limits unless the foreground changes materially.
+3. Fact-check cards are forced only for decision-relevant factual claims.
+4. Interview-style conversations bias toward questions, answers, and talking points instead of trivia fact-checks.
+5. The three cards must be varied by kind and topic.
 
 ### Preview-must-be-useful-alone
 
@@ -121,7 +117,7 @@ web/
     groq.ts                              thin fetch wrapper
     recorder.ts                          MediaRecorder rotation
     transcribe.ts, suggest.ts, chat.ts   client → API-route helpers
-    export.ts                            session → JSON download
+    export.ts                            session → JSON/TXT download
 ```
 
 Data flow:
@@ -130,7 +126,7 @@ Data flow:
 - On an interval (30s while recording) → `POST /api/suggest` with `{ transcript slice, meetingType, previousSuggestions }` → Groq chat (JSON mode) → validated → new batch prepended to `state.batches`.
 - Click on a card → push a `user` message + empty `assistant` message into the chat store → `POST /api/chat` (SSE) → tokens streamed back → appended to the last assistant message.
 - Typed chat message → same as above, without the `fromSuggestion` hint.
-- Export → serialize transcript + batches + chat to JSON, trigger a download.
+- Export → serialize transcript + batches + chat to JSON or plain text, trigger a download.
 
 Every Groq call goes through a server-side Next.js API route. The user's API key rides along in an `x-groq-key` header on every request, sourced from `localStorage` via zustand/persist. It is never persisted server-side and never bundled into the build.
 
@@ -151,4 +147,4 @@ Every Groq call goes through a server-side Next.js API route. The user's API key
 - Streaming the suggestion JSON with a partial-JSON parser for faster first-card render.
 - Dev-mode A/B prompt harness — run two prompt versions on the same transcript side-by-side to diff the output qualitatively.
 
-See also the repo-root `CODE_GUIDE.md` for a file-by-file walkthrough of the source tree.
+See also the repo-root `README.md` for the submission overview.

@@ -5,7 +5,7 @@
  *
  *   1. FOREGROUND RULE (new, after DEPTH-MATCH).
  *      Treats the LAST 2 chunks as foreground - trigger quote MUST come from there.
- *      Targets our measured ~25% premature rate (HANDOFF §5): the previous DEPTH rule
+ *      Targets our measured ~25% premature rate: the previous DEPTH rule
  *      caught "architecture during scoping" but let through "re-raise stale topic
  *      from 3 chunks ago."
  *

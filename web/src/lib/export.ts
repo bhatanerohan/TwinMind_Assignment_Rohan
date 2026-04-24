@@ -57,7 +57,6 @@ function buildSessionExport(exportedAt: Date): SessionExport {
       startedAt: new Date(c.startedAt).toISOString(),
       endedAt: new Date(c.endedAt).toISOString(),
       text: c.text,
-      ...(c.speaker ? { speaker: c.speaker } : {}),
     })),
     batches: session.batches.map((b) => ({
       createdAt: new Date(b.createdAt).toISOString(),
@@ -116,8 +115,7 @@ function renderTextSession(data: SessionExport): string {
     lines.push("(none)");
   } else {
     for (const chunk of data.transcript) {
-      const speaker = chunk.speaker ? ` [${chunk.speaker.toUpperCase()}]` : "";
-      lines.push(`[${chunk.startedAt} - ${chunk.endedAt}]${speaker} ${chunk.text}`);
+      lines.push(`[${chunk.startedAt} - ${chunk.endedAt}] ${chunk.text}`);
     }
   }
 
