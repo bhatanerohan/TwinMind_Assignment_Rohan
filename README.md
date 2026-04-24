@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`, click Settings, and paste a Groq API key beginning with `gsk_`.
+Open `http://localhost:3000`. Settings opens automatically on each page load so the evaluator can paste a Groq API key beginning with `gsk_`.
 
 ## Build
 
@@ -46,17 +46,51 @@ npm run build
 
 ## Prompt Strategy
 
-The suggestion prompt focuses on what is happening now, not generic meeting advice:
+The core prompt decision is to optimize for live usefulness instead of meeting summarization. The app should surface what the user can say or check in the next 30 seconds, not generic advice about the whole call.
 
-- Dense recent transcript context is always included.
-- Sparse older transcript excerpts preserve earlier constraints without overloading the prompt.
-- The final one or two recent transcript entries are treated as foreground.
-- Previous suggestions are sent back to reduce repeated topics.
-- Meeting type is classified once per session and reused as routing context.
-- Fact-check cards are only forced for decision-relevant claims.
-- Card previews are designed to be useful without clicking.
+### Prompt Surfaces
 
-Prompt versions and eval notes are documented in `web/src/lib/prompt-versions/README.md`.
+- **Live suggestions:** returns exactly three JSON cards for the middle column. It receives meeting type, transcript context, and previously shown suggestions so it can stay timely and avoid repeats.
+- **Expanded answer:** runs when a suggestion is clicked. It gets a larger transcript window and the clicked card, then streams a direct answer into chat.
+- **Free-form chat:** handles user questions in the right column. It uses transcript grounding plus capped recent chat history so long sessions remain responsive.
+
+All three prompts are editable in Settings, but the defaults are versioned in `web/src/lib/prompt-versions/`.
+
+### Context Construction
+
+The transcript is not passed as one unbounded blob. `web/src/lib/transcriptContext.ts` builds a mixed context window:
+
+- **Dense recent context:** about 72% of the budget is reserved for the newest transcript chunks. This is the main signal for live timing.
+- **Sparse older context:** the remaining budget is used for up to 8 evenly spaced verbatim excerpts from earlier in the session. This preserves prior constraints without paying for the entire transcript.
+- **Foreground rule:** the final 1-2 recent entries are treated as the only valid trigger for new cards. Older excerpts are memory only.
+- **No synthetic summary:** older context is sampled verbatim rather than summarized, so the model is less likely to inherit mistakes from a generated summary.
+
+Default windows are 6,000 chars for suggestions and 20,000 chars for clicked answers/chat.
+
+### Suggestion Selection Rules
+
+The live prompt uses hard routing rules rather than asking for "good suggestions" generally:
+
+- Suggestions must be grounded in the current foreground, not old topics.
+- The three cards should vary by both kind and topic.
+- Previous cards are sent back to the model and treated as off-limits unless the conversation clearly pivots.
+- Meeting type is classified once after enough transcript exists, then reused as routing context.
+- Interview-like calls bias toward questions, answers, and talking points instead of trivia fact-checks.
+- Fact-check cards are only forced when the latest transcript contains a decision-relevant factual or numeric claim.
+- Card previews must be useful without clicking and include wording the user could say aloud with little editing.
+
+### Timing And Latency Choices
+
+- Audio is recorded in 30-second MediaRecorder rotations so each uploaded blob is independently decodable by Whisper.
+- Suggestions normally refresh every 30 seconds while recording.
+- The first suggestion batch is attempted immediately after the first real transcript chunk, with a 120-character readiness floor to avoid empty setup cards.
+- Suggestion JSON is returned as a complete batch instead of streamed. Chat responses stream and are buffered client-side to reduce UI lag.
+
+### Evaluation Loop
+
+Prompt changes are tested with `npm run eval` in `web/`. The eval harness runs multiple meeting transcripts across repeated cycles, scores specificity, actionability, preview quality, timing fit, meeting-type calibration, and cross-batch variety, then writes reports under `web/scripts/eval-reports/` (gitignored).
+
+Prompt versions and score notes are documented in `web/src/lib/prompt-versions/README.md`.
 
 ## Export Format
 
@@ -91,8 +125,6 @@ web/
     store.ts
     transcriptContext.ts
 ```
-
-More implementation details are in `web/README.md`.
 
 ## Tradeoffs
 
