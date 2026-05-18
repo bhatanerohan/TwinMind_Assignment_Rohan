@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession, useSettings } from "@/lib/store";
+import { useSession } from "@/lib/store";
 import { streamChatReply, formatChatError } from "@/lib/chat";
 import { appendBufferedStream } from "@/lib/streamBuffer";
 import PanelHeader from "@/components/PanelHeader";
@@ -11,9 +11,6 @@ export default function ChatPanel() {
   const chat = useSession((s) => s.chat);
   const addChatMessage = useSession((s) => s.addChatMessage);
   const updateChatMessage = useSession((s) => s.updateChatMessage);
-
-  const settings = useSettings((s) => s.settings);
-  const hasApiKey = settings.apiKey.trim().length > 0;
 
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -35,7 +32,7 @@ export default function ChatPanel() {
 
   const submit = async () => {
     const text = input.trim();
-    if (!text || sending || !hasApiKey) return;
+    if (!text || sending) return;
     setInput("");
     setSending(true);
     const assistantId = crypto.randomUUID();
@@ -112,14 +109,14 @@ export default function ChatPanel() {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             rows={1}
-            disabled={!hasApiKey || sending}
-            placeholder={hasApiKey ? "Ask anything…" : "Set API key in Settings to chat."}
+            disabled={sending}
+            placeholder="Ask anything..."
             className="flex-1 resize-none rounded-md border border-slate-800 bg-slate-900 text-slate-100 placeholder-slate-500 px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500/40 disabled:opacity-60 min-h-[38px] max-h-40"
           />
           <button
             type="button"
             onClick={submit}
-            disabled={!hasApiKey || sending || input.trim().length === 0}
+            disabled={sending || input.trim().length === 0}
             className="inline-flex items-center justify-center h-[38px] px-4 rounded-md bg-sky-500 hover:bg-sky-400 text-white text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Send

@@ -25,7 +25,7 @@ The deployable Next.js app lives in `web/`. The main application source is alrea
 | AI | Groq APIs via server-side Next.js routes |
 | Markdown | `react-markdown` + `remark-gfm` |
 
-No login, database, or server-side persistence is used. The Groq API key is entered by the user in Settings and stored only in browser `localStorage`.
+No login, database, or server-side persistence is used. The Groq API key is configured server-side as `GROQ_API_KEY`, so users can open the app and start immediately without pasting a key into the UI.
 
 ## Setup
 
@@ -35,7 +35,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. Settings opens automatically on each page load so the evaluator can paste a Groq API key beginning with `gsk_`.
+Set `GROQ_API_KEY` in your environment before running locally. Open `http://localhost:3000`; the main app loads directly, and Settings is only for prompt/context tuning.
 
 ## Build
 

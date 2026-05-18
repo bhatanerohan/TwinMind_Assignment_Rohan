@@ -1,4 +1,4 @@
-import { groqTranscribe, readApiKeyFromRequest } from "@/lib/groq";
+import { groqTranscribe, readServerGroqApiKey } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +24,12 @@ function isTransientError(err: unknown): boolean {
 }
 
 export async function POST(request: Request) {
-  const apiKey = readApiKeyFromRequest(request);
+  const apiKey = readServerGroqApiKey();
   if (!apiKey) {
-    return Response.json({ error: "Missing or invalid x-groq-key header" }, { status: 401 });
+    return Response.json(
+      { error: "Server GROQ_API_KEY is not configured" },
+      { status: 500 },
+    );
   }
 
   const form = await request.formData();

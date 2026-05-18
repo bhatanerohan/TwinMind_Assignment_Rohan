@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Eye, EyeOff, RotateCcw, X } from "lucide-react";
+import { useEffect } from "react";
+import { RotateCcw, X } from "lucide-react";
 import { useSettings } from "@/lib/store";
 import {
   DEFAULT_CHAT_PROMPT,
@@ -22,8 +22,6 @@ export default function SettingsDialog({
   const updateSettings = useSettings((s) => s.updateSettings);
   const resetPrompts = useSettings((s) => s.resetPrompts);
 
-  const [showKey, setShowKey] = useState(false);
-
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -34,9 +32,6 @@ export default function SettingsDialog({
   }, [open, onOpenChange]);
 
   if (!open) return null;
-
-  const apiKeyInvalid =
-    settings.apiKey.length > 0 && !settings.apiKey.startsWith("gsk_");
 
   const handleResetAll = () => {
     const ok = window.confirm(
@@ -70,37 +65,6 @@ export default function SettingsDialog({
             <X className="h-5 w-5" />
           </button>
         </div>
-
-        <section className="mb-6">
-          <h3 className="mb-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-slate-400">
-            Groq API key
-          </h3>
-          <div className="flex gap-2">
-            <input
-              type={showKey ? "text" : "password"}
-              value={settings.apiKey}
-              onChange={(e) => updateSettings({ apiKey: e.target.value })}
-              placeholder="gsk_..."
-              className="flex-1 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40"
-            />
-            <button
-              type="button"
-              onClick={() => setShowKey((v) => !v)}
-              className="flex items-center gap-1 rounded-md border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              {showKey ? "Hide" : "Show"}
-            </button>
-          </div>
-          {apiKeyInvalid && (
-            <p className="mt-1.5 text-xs text-red-400">
-              API key should start with &quot;gsk_&quot;.
-            </p>
-          )}
-          <p className="mt-1.5 text-xs text-slate-500">
-            Stored only in your browser&apos;s localStorage. Get a key at console.groq.com.
-          </p>
-        </section>
 
         <PromptSection
           title="Live suggestions prompt"

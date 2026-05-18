@@ -36,7 +36,6 @@ export interface ChatMessage {
 }
 
 export interface Settings {
-  apiKey: string;
   suggestPrompt: string;
   detailPrompt: string;
   chatPrompt: string;

@@ -1,4 +1,4 @@
-import { groqChat, readApiKeyFromRequest, type GroqChatMessage } from "@/lib/groq";
+import { groqChat, readServerGroqApiKey, type GroqChatMessage } from "@/lib/groq";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,9 +56,12 @@ function friendlyErrorBody(status: number, upstreamText: string): string {
 }
 
 export async function POST(request: Request) {
-  const apiKey = readApiKeyFromRequest(request);
+  const apiKey = readServerGroqApiKey();
   if (!apiKey) {
-    return Response.json({ error: "Missing or invalid x-groq-key header" }, { status: 401 });
+    return Response.json(
+      { error: "Server GROQ_API_KEY is not configured" },
+      { status: 500 },
+    );
   }
 
   const body = (await request.json()) as ChatRequestBody;

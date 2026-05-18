@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import Header from "@/components/Header";
 import TranscriptPanel from "@/components/TranscriptPanel";
 import SuggestionsPanel from "@/components/SuggestionsPanel";
@@ -20,14 +20,6 @@ function useMounted(): boolean {
 export default function Home() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const mounted = useMounted();
-
-  useEffect(() => {
-    if (!mounted) return;
-    const id = window.setTimeout(() => {
-      setSettingsOpen(true);
-    }, 0);
-    return () => window.clearTimeout(id);
-  }, [mounted]);
 
   if (!mounted) {
     return (

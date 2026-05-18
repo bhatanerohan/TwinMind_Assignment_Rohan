@@ -18,9 +18,6 @@ export async function* streamChatReply(
   fromSuggestion?: Suggestion,
 ): AsyncGenerator<string> {
   const { settings } = useSettings.getState();
-  if (!settings.apiKey) {
-    throw new Error("API key not set");
-  }
 
   const session = useSession.getState();
   const contextChars = fromSuggestion
@@ -44,7 +41,6 @@ export async function* streamChatReply(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-groq-key": settings.apiKey,
     },
     body: JSON.stringify({
       transcript,

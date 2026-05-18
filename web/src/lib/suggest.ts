@@ -14,9 +14,6 @@ interface SuggestResponse {
 
 export async function fetchSuggestions(): Promise<SuggestionBatch | null> {
   const { settings } = useSettings.getState();
-  if (!settings.apiKey) {
-    throw new Error("API key not set");
-  }
 
   const session = useSession.getState();
   const transcript = buildTranscriptContext(
@@ -40,7 +37,6 @@ export async function fetchSuggestions(): Promise<SuggestionBatch | null> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-groq-key": settings.apiKey,
     },
     body: JSON.stringify({
       transcript,

@@ -29,7 +29,6 @@ export default function SuggestionsPanel() {
   const updateChatMessage = useSession((s) => s.updateChatMessage);
 
   const settings = useSettings((s) => s.settings);
-  const hasApiKey = settings.apiKey.trim().length > 0;
   const refreshIntervalMs = settings.refreshIntervalMs;
 
   const [loading, setLoading] = useState(false);
@@ -40,7 +39,6 @@ export default function SuggestionsPanel() {
 
   const refresh = useCallback(async () => {
     if (loadingRef.current) return;
-    if (!hasApiKey) return;
     loadingRef.current = true;
     setLoading(true);
     setError(null);
@@ -56,34 +54,34 @@ export default function SuggestionsPanel() {
       loadingRef.current = false;
       setLoading(false);
     }
-  }, [hasApiKey, addBatch, refreshIntervalMs]);
+  }, [addBatch, refreshIntervalMs]);
 
   useEffect(() => {
-    if (!isRecording || !hasApiKey) return;
+    if (!isRecording) return;
     const id = setInterval(() => {
       refresh();
     }, refreshIntervalMs);
     return () => clearInterval(id);
-  }, [isRecording, hasApiKey, refreshIntervalMs, refresh]);
+  }, [isRecording, refreshIntervalMs, refresh]);
 
   useEffect(() => {
     if (!latestTranscriptId) {
       firstBatchAttemptRef.current = null;
       return;
     }
-    if (!isRecording || !hasApiKey || batches.length > 0) return;
+    if (!isRecording || batches.length > 0) return;
     if (firstBatchAttemptRef.current === latestTranscriptId) return;
     firstBatchAttemptRef.current = latestTranscriptId;
     void refresh();
-  }, [isRecording, hasApiKey, batches.length, latestTranscriptId, refresh]);
+  }, [isRecording, batches.length, latestTranscriptId, refresh]);
 
   useEffect(() => {
-    if (!isRecording || !hasApiKey) return;
+    if (!isRecording) return;
     const id = setInterval(() => {
       setSecondsLeft((s) => (s <= 1 ? Math.round(refreshIntervalMs / 1000) : s - 1));
     }, 1000);
     return () => clearInterval(id);
-  }, [isRecording, hasApiKey, refreshIntervalMs]);
+  }, [isRecording, refreshIntervalMs]);
 
   const handleCardClick = async (suggestion: Suggestion) => {
     const assistantId = crypto.randomUUID();
@@ -125,14 +123,14 @@ export default function SuggestionsPanel() {
         <button
           type="button"
           onClick={refresh}
-          disabled={!hasApiKey || loading}
+          disabled={loading}
           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <RotateCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           <span>{loading ? "Reloading…" : "Reload suggestions"}</span>
         </button>
         <span className="text-[11px] text-slate-500 tabular-nums">
-          {isRecording && hasApiKey
+          {isRecording
             ? `auto-refresh in ${secondsLeft}s`
             : "auto-refresh paused"}
         </span>

@@ -20,7 +20,6 @@ export default function TranscriptPanel() {
   const setRecording = useSession((s) => s.setRecording);
   const addTranscriptChunk = useSession((s) => s.addTranscriptChunk);
   const settings = useSettings((s) => s.settings);
-  const hasApiKey = settings.apiKey.trim().length > 0;
   const chunkIntervalMs = settings.chunkIntervalMs;
 
   const [error, setError] = useState<string | null>(null);
@@ -90,15 +89,13 @@ export default function TranscriptPanel() {
     else handleStart();
   };
 
-  const statusLabel = !hasApiKey
-    ? "NO KEY"
-    : isRecording
+  const statusLabel = isRecording
       ? "LIVE"
       : transcript.length > 0
         ? "PAUSED"
         : "IDLE";
   const statusTone: "muted" | "warn" | "ok" =
-    !hasApiKey ? "warn" : isRecording ? "ok" : "muted";
+    isRecording ? "ok" : "muted";
 
   return (
     <section className="flex flex-col h-full min-h-0">
@@ -108,7 +105,7 @@ export default function TranscriptPanel() {
         <button
           type="button"
           onClick={toggle}
-          disabled={!hasApiKey || starting}
+          disabled={starting}
           className="group flex items-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
           aria-label={isRecording ? "Stop recording" : "Start recording"}
         >
@@ -137,9 +134,7 @@ export default function TranscriptPanel() {
                 ? <>Recording. <span className="text-slate-500">Click to stop.</span></>
                 : transcript.length > 0
                   ? <>Stopped. <span className="text-slate-500">Click to resume.</span></>
-                  : !hasApiKey
-                    ? <span className="text-slate-500">Set API key in Settings to start.</span>
-                    : <>Click to start recording.</>}
+                  : <>Click to start recording.</>}
           </span>
         </button>
       </div>

@@ -45,8 +45,8 @@ export async function groqTranscribe(
   });
 }
 
-export function readApiKeyFromRequest(request: Request): string | null {
-  const key = request.headers.get("x-groq-key");
+export function readServerGroqApiKey(): string | null {
+  const key = process.env.GROQ_API_KEY?.trim();
   if (!key || !key.startsWith("gsk_")) return null;
   return key;
 }

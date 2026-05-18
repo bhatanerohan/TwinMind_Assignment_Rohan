@@ -5,10 +5,7 @@ export async function uploadChunk(
   blob: Blob,
   startedAt: number,
 ): Promise<TranscriptChunk> {
-  const { apiKey, whisperModel } = useSettings.getState().settings;
-  if (!apiKey) {
-    throw new Error("API key not set");
-  }
+  const { whisperModel } = useSettings.getState().settings;
 
   const form = new FormData();
   const file = new File([blob], `chunk-${startedAt}.webm`, {
@@ -19,7 +16,6 @@ export async function uploadChunk(
 
   const res = await fetch("/api/transcribe", {
     method: "POST",
-    headers: { "x-groq-key": apiKey },
     body: form,
   });
 

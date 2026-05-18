@@ -1,4 +1,4 @@
-import { groqChat, readApiKeyFromRequest, type GroqChatMessage } from "@/lib/groq";
+import { groqChat, readServerGroqApiKey, type GroqChatMessage } from "@/lib/groq";
 import { hasFactualClaim } from "@/lib/factCheck";
 import { hasEnoughTranscriptForSuggestions } from "@/lib/suggestReadiness";
 import type { MeetingType, Suggestion, SuggestionKind } from "@/lib/types";
@@ -163,9 +163,12 @@ async function classifyMeetingType(
 }
 
 export async function POST(request: Request) {
-  const apiKey = readApiKeyFromRequest(request);
+  const apiKey = readServerGroqApiKey();
   if (!apiKey) {
-    return Response.json({ error: "Missing or invalid x-groq-key header" }, { status: 401 });
+    return Response.json(
+      { error: "Server GROQ_API_KEY is not configured" },
+      { status: 500 },
+    );
   }
 
   const body = (await request.json()) as SuggestRequestBody;

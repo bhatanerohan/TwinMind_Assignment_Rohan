@@ -43,7 +43,6 @@ interface SessionState {
 
 interface SettingsState {
   settings: Settings;
-  setApiKey: (apiKey: string) => void;
   updateSettings: (partial: Partial<Settings>) => void;
   resetPrompts: () => void;
 }
@@ -100,9 +99,7 @@ export const useSession = create<SessionState>((set) => ({
 export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
-      settings: { apiKey: "", ...DEFAULT_SETTINGS },
-      setApiKey: (apiKey) =>
-        set((state) => ({ settings: { ...state.settings, apiKey } })),
+      settings: { ...DEFAULT_SETTINGS },
       updateSettings: (partial) =>
         set((state) => ({ settings: { ...state.settings, ...partial } })),
       resetPrompts: () =>
@@ -111,12 +108,19 @@ export const useSettings = create<SettingsState>()(
     {
       name: "twinmind-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 10,
+      version: 11,
       migrate: (persisted: unknown, version: number) => {
         const p = (persisted ?? {}) as { settings?: Partial<Settings> };
-        const { userRole: _unusedUserRole, ...oldSettings } =
-          (p.settings ?? {}) as Partial<Settings> & { userRole?: unknown };
+        const {
+          userRole: _unusedUserRole,
+          apiKey: _unusedApiKey,
+          ...oldSettings
+        } = (p.settings ?? {}) as Partial<Settings> & {
+          userRole?: unknown;
+          apiKey?: unknown;
+        };
         void _unusedUserRole;
+        void _unusedApiKey;
         const normalizedSettings = {
           ...DEFAULT_SETTINGS,
           ...oldSettings,
